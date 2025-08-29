@@ -1,0 +1,233 @@
+openapi: 3.0.3
+info:
+  title: TMF668 Partnership Management API
+  version: 4.0.0
+  description: OpenAPI spec for TMF668 Partnership Management API
+servers:
+  - url: /tmf-api/partnershipManagement/v4
+paths:
+  /partnershipSpecification:
+    get:
+      summary: List PartnershipSpecifications
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create PartnershipSpecification
+      responses:
+        '201':
+          description: Created
+  /partnershipSpecification/{id}:
+    get:
+      summary: Get PartnershipSpecification by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not found
+    patch:
+      summary: Patch PartnershipSpecification
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/merge-patch+json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Updated
+        '404':
+          description: Not found
+    delete:
+      summary: Delete PartnershipSpecification
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not found
+  /partnership:
+    get:
+      summary: List Partnerships
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create Partnership
+      responses:
+        '201':
+          description: Created
+  /partnership/{id}:
+    get:
+      summary: Get Partnership by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not found
+    patch:
+      summary: Patch Partnership
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/merge-patch+json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Updated
+        '404':
+          description: Not found
+    delete:
+      summary: Delete Partnership
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not found
+  /hub:
+    post:
+      summary: Register notification listener
+      responses:
+        '201':
+          description: Registered
+  /hub/{id}:
+    delete:
+      summary: Remove notification listener
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Removed
+components:
+  schemas:
+    PartnershipSpecification:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        roleSpecification:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartnershipRoleSpecification'
+    PartnershipRoleSpecification:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        requiresBilling:
+          type: boolean
+        requiresSettlement:
+          type: boolean
+        agreementSpecification:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgreementSpecificationRef'
+    AgreementSpecificationRef:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    Partnership:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        specification:
+          $ref: '#/components/schemas/SpecificationRef'
+        partner:
+          type: array
+          items:
+            $ref: '#/components/schemas/Partner'
+    SpecificationRef:
+      type: object
+      properties:
+        id:
+          type: string
+        href:
+          type: string
+        name:
+          type: string
+    Partner:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+        statusReason:
+          type: string
+        engagedParty:
+          $ref: '#/components/schemas/EngagedParty'
+        account:
+          type: object
+        agreement:
+          type: object
+        relatedParty:
+          type: object
+        creditProfile:
+          type: object
+        contactMedium:
+          type: object
+    EngagedParty:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+        '@referredType':
+          type: string 

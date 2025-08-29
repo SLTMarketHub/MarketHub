@@ -1,0 +1,67 @@
+{
+  "partnershipSpecifications": [
+    {
+      "id": "b1e7c1e0-1234-4a1a-9b1a-111111111111",
+      "name": "Wholesale Partner Spec",
+      "description": "Template for wholesale partnerships",
+      "roleSpecification": [
+        {
+          "name": "Supplier",
+          "description": "Provides wholesale services",
+          "requiresBilling": true,
+          "requiresSettlement": true,
+          "agreementSpecification": [
+            { "id": "a1", "name": "Wholesale Agreement" }
+          ]
+        },
+        {
+          "name": "Buyer",
+          "description": "Buys wholesale services",
+          "requiresBilling": false,
+          "requiresSettlement": true,
+          "agreementSpecification": [
+            { "id": "a2", "name": "Buyer Agreement" }
+          ]
+        }
+      ]
+    }
+  ],
+  "partnerships": [
+    {
+      "id": "c2e7c1e0-5678-4a1a-9b1a-222222222222",
+      "name": "Acme-Globex Partnership",
+      "description": "Active partnership between Acme and Globex",
+      "specification": {
+        "id": "b1e7c1e0-1234-4a1a-9b1a-111111111111",
+        "href": "/tmf-api/partnershipManagement/v4/partnershipSpecification/b1e7c1e0-1234-4a1a-9b1a-111111111111",
+        "name": "Wholesale Partner Spec"
+      },
+      "partner": [
+        {
+          "id": "p1",
+          "name": "Acme Corp",
+          "status": "active",
+          "statusReason": "",
+          "engagedParty": {
+            "id": "e1",
+            "name": "Acme Legal Entity",
+            "role": "Supplier",
+            "@referredType": "Organization"
+          }
+        },
+        {
+          "id": "p2",
+          "name": "Globex Inc",
+          "status": "active",
+          "statusReason": "",
+          "engagedParty": {
+            "id": "e2",
+            "name": "Globex Legal Entity",
+            "role": "Buyer",
+            "@referredType": "Organization"
+          }
+        }
+      ]
+    }
+  ]
+} 

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Catalog API Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        .header {
+            background-color: #3498db;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .endpoint-card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+        }
+        .endpoint-title {
+            font-weight: bold;
+            color: #2980b9;
+            margin-bottom: 10px;
+        }
+        .endpoint-method {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-weight: bold;
+            font-size: 0.8em;
+            margin-right: 10px;
+        }
+        .get { background-color: #2ecc71; color: white; }
+        .post { background-color: #f39c12; color: white; }
+        .put { background-color: #3498db; color: white; }
+        .delete { background-color: #e74c3c; color: white; }
+        .endpoint-url {
+            font-family: monospace;
+            background-color: #eee;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        .response-example {
+            background-color: #f5f5f5;
+            border-left: 4px solid #3498db;
+            padding: 10px;
+            margin-top: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 0.9em;
+        }
+        .try-it {
+            margin-top: 10px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #responseOutput {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            min-height: 50px;
+            background-color: #f5f5f5;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Product Catalog API</h1>
+        <p>A RESTful API for managing product catalogs, offerings, specifications, and jobs</p>
+    </div>
+
+    <h2>API Endpoints</h2>
+
+    <div class="endpoint-card">
+        <div class="endpoint-title">
+            <span class="endpoint-method get">GET</span>
+            <span class="endpoint-url">/api/productCatalog</span>
+        </div>
+        <p>Retrieve all product catalogs</p>
+        <div class="response-example">
+[
+  {
+    "id": "5f8d8f7d8f7d8f7d8f7d8f7d",
+    "href": "http://localhost:5000/api/productCatalog/5f8d8f7d8f7d8f7d8f7d8f7d",
+    "@type": "ProductCatalog",
+    "name": "Summer Collection 2023",
+    "description": "Our summer product collection",
+    "lifecycleStatus": "Active",
+    "lastUpdate": "2023-06-15T10:30:00.000Z"
+  }
+]
+        </div>
+        <div class="try-it">
+            <button onclick="fetchData('/api/productCatalog')">Try it</button>
+            <div id="productCatalogResponse"></div>
+        </div>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-title">
+            <span class="endpoint-method post">POST</span>
+            <span class="endpoint-url">/api/productCatalog</span>
+        </div>
+        <p>Create a new product catalog</p>
+        <div class="response-example">
+{
+  "name": "New Catalog",
+  "description": "Description of new catalog",
+  "lifecycleStatus": "Active",
+  "version": "1.0"
+}
+        </div>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-title">
+            <span class="endpoint-method get">GET</span>
+            <span class="endpoint-url">/api/productOffering</span>
+        </div>
+        <p>Retrieve all product offerings</p>
+        <div class="try-it">
+            <button onclick="fetchData('/api/productOffering')">Try it</button>
+            <div id="productOfferingResponse"></div>
+        </div>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-title">
+            <span class="endpoint-method get">GET</span>
+            <span class="endpoint-url">/api/productSpecification</span>
+        </div>
+        <p>Retrieve all product specifications</p>
+        <div class="try-it">
+            <button onclick="fetchData('/api/productSpecification')">Try it</button>
+            <div id="productSpecificationResponse"></div>
+        </div>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-title">
+            <span class="endpoint-method get">GET</span>
+            <span class="endpoint-url">/api/importJob</span>
+        </div>
+        <p>Retrieve all import jobs</p>
+        <div class="try-it">
+            <button onclick="fetchData('/api/importJob')">Try it</button>
+            <div id="importJobResponse"></div>
+        </div>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-title">
+            <span class="endpoint-method get">GET</span>
+            <span class="endpoint-url">/api/exportJob</span>
+        </div>
+        <p>Retrieve all export jobs</p>
+        <div class="try-it">
+            <button onclick="fetchData('/api/exportJob')">Try it</button>
+            <div id="exportJobResponse"></div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchData(endpoint) {
+            const responseElement = document.getElementById(endpoint.substring(1).replace('/', '') + 'Response');
+            responseElement.innerHTML = 'Loading...';
+            
+            try {
+                const response = await fetch(endpoint);
+                const data = await response.json();
+                responseElement.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseElement.innerHTML = 'Error: ' + error.message;
+            }
+        }
+
+        // Load some initial data
+        window.onload = function() {
+            fetchData('/api/productCatalog');
+            fetchData('/api/productOffering');
+        };
+    </script>
+</body>
+</html>
