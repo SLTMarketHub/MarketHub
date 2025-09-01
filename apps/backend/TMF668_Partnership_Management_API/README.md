@@ -1,1 +1,0 @@
-# TMF668_Partnership_Management_API
