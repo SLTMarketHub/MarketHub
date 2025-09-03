@@ -1,0 +1,185 @@
+{
+    "generated": "2023-05-30T12:00:00",
+    "version": "1.0.0",
+    "apiVersion": "5.0.0",
+    "tests": {
+        "1": {
+            "type": "auto",
+            "method": "POST",
+            "collection": false,
+            "schemaRef": "#/components/schemas/Customer",
+            "statusCodes": [
+                201
+            ],
+            "basePath": "config.json#/url",
+            "path": "/customer",
+            "body": "config.json#/payloads/Customer/POST/payload",
+            "headers": "config.json#/headers",
+            "query": "",
+            "testContext": "TMF629B_Customer Management Conformance Profile v5.0.0 - API POST Operation Conformance - For Customer Resource",
+            "mandatoryKeys": [
+                "@type",
+                "href",
+                "id",
+                "name",
+                "engagedParty.@type"
+            ]
+        },
+        "2": {
+            "type": "auto",
+            "method": "GET",
+            "collection": true,
+            "schemaRef": "#/components/schemas/Customer",
+            "statusCodes": [
+                200,
+                206
+            ],
+            "basePath": "config.json#/basePath",
+            "path": "/customer",
+            "body": "",
+            "headers": "config.json#/headers",
+            "query": "",
+            "mandatoryKeys": [
+                "@type",
+                "href",
+                "id",
+                "name",
+                "engagedParty.@type"
+            ]
+        },
+        "3": {
+            "type": "auto",
+            "method": "GET",
+            "collection": true,
+            "schemaRef": "#/components/schemas/Customer",
+            "statusCodes": [
+                200, 206
+            ],
+            "basePath": "config.json#/basePath",
+            "path": "/customer",
+            "body": "",
+            "headers": "config.json#/headers",
+            "query": "?name=Mary Doe",
+            "mandatoryKeys": [
+                "@type",
+                "href",
+                "id",
+                "name",
+                "engagedParty.@type"
+            ]
+        },
+        "4": {
+            "type": "auto",
+            "method": "GET",
+            "collection": true,
+            "schemaRef": "#/components/schemas/Customer",
+            "statusCodes": [
+                200
+            ],
+            "basePath": "config.json#/basePath",
+            "path": "/customer/{id}",
+            "body": "",
+            "headers": "config.json#/headers",
+            "query": "",
+            "mandatoryKeys": [
+                "@type",
+                "href",
+                "id",
+                "name"
+            ]
+        },
+        "5": {
+            "type": "auto",
+            "method": "GET",
+            "collection": true,
+            "schemaRef": "#/components/schemas/Customer",
+            "statusCodes": [
+                200
+            ],
+            "basePath": "config.json#/basePath",
+            "path": "/customer/{id}",
+            "body": "",
+            "headers": "config.json#/headers",
+            "query": "",
+            "mandatoryKeys": [
+                "@type",
+                "href",
+                "id",
+                "name"
+            ]
+        },
+        
+        "6": {
+            "type": "auto",
+            "method": "GET",
+            "collection": false,
+            "schemaRef": "#/components/schemas/Customer",
+            "statusCodes": [
+                200, 206
+            ],
+            "basePath": "config.json#/basePath",
+            "path": "/customer/{id}",
+            "body": "",
+            "headers": "config.json#/headers",
+            "query": "?fields=name",
+            "mandatoryKeys": [
+                "@type",
+                "href",
+                "id",
+                "name"
+            ]
+        },
+        "7": {
+            "type": "auto",
+            "method": "GET",
+            "collection": true,
+            "schemaRef": "#/components/schemas/Customer",
+            "statusCodes": [
+                200, 206
+            ],
+            "basePath": "config.json#/basePath",
+            "path": "/customer/{id}",
+            "body": "",
+            "headers": "config.json#/headers",
+            "query": "?fields=engagedParty",
+            "mandatoryKeys": [
+                "@type",
+                "href",
+                "id"
+            ]
+        },
+        
+        "8": {
+            "type": "auto",
+            "method": "PATCH",
+            "collection": false,
+            "schemaRef": "#/components/schemas/Customer",
+            "statusCodes": [
+                200
+            ],
+            "basePath": "config.json#/basePath",
+            "path": "/customer/{id}",
+            "body": "config.json#/payloads/Customer/PATCH/payload",
+            "headers": "config.json#/headers",
+            "query": "",
+            "mandatoryKeys": [
+                "@type"
+            ]
+        },
+        "9": {
+            "type": "auto",
+            "method": "DELETE",
+            "collection": false,
+            "schemaRef": "#/components/schemas/Customer",
+            "statusCodes": [
+                204
+            ],
+            "basePath": "config.json#/basePath",
+            "path": "/customer/{id}",
+            "body": "",
+            "headers": "config.json#/headers",
+            "query": "",
+            "mandatoryKeys": []
+        }
+    }
+}

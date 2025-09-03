@@ -1,0 +1,37 @@
+{
+    "url": "http://localhost:3000/tmf-api/customerManagement/v5/",
+    "headers": {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+    },
+    "payloads": {
+        "Customer": {
+            "POST": {
+                "payload": {
+                    "@type": "Customer",
+                    "name": "Mary Doe",
+                    "engagedParty": {
+                        "@type": "PartyRef",
+                        "href": "https://host:port/tmf-api/partyManagement/v5/organization/502",
+                        "id": "502",
+                        "name": "Another Travellers",
+                        "@referredType": "Organization"
+                    }
+                }
+            },
+            "PATCH": {
+                "payload": {
+                    "@type": "Customer",
+                    "name": "John Doe",
+                    "engagedParty": {
+                        "@type": "PartyRef",
+                        "href": "https://host:port/tmf-api/partyManagement/v5/organization/500",
+                        "id": "500",
+                        "name": "Happy Travellers",
+                        "@referredType": "Organization"
+                    }
+                }
+            }
+        }
+    }
+}
