@@ -1,0 +1,7 @@
+{
+  "host": "localhost",
+  "port": 3000,
+  "basePath": "/tmf-api/customerManagement/v5",
+  "protocol": "http",
+  "api": "TMF629"
+}
