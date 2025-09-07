@@ -19,7 +19,7 @@ app.use("/tmf-api/communicationManagement/v4/communicationMessage", communicatio
 app.use("/", hubRoutes);
 
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5008;
 
 
 mongoose.connect(process.env.MONGODB_URI)
