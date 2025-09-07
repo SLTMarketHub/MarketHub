@@ -6,7 +6,7 @@ const cors = require('cors');
 
 // Create app
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5005;
 const BASE_URL = '/tmf-api/serviceCatalogManagement/v4';
 
 // Import route files
