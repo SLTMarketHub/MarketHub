@@ -1,7 +1,6 @@
-import mongoose, { Document, Schema } from 'mongoose';
-import { IProduct } from '../types';
+import mongoose from 'mongoose';
 
-const productSchema: Schema = new mongoose.Schema(
+const productSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -45,5 +44,6 @@ const productSchema: Schema = new mongoose.Schema(
   }
 );
 
-// Export the model and return your IProduct interface
-export default mongoose.model<IProduct>('Product', productSchema);
+export default mongoose.model('Product', productSchema);
+
+
