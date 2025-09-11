@@ -1,41 +1,41 @@
-// partnershipSpecification.js
-// Express routes for TMF668 PartnershipSpecification resource
+// partnership.js
+// Express routes for TMF668 Partnership resource
 
 const express = require('express');
 const router = express.Router();
-const PartnershipSpecification = require('../models/PartnershipSpecification');
+const Partnership = require('../models/Partnership');
 
 /**
  * @swagger
- * /partnershipSpecification:
+ * /partnership:
  *   post:
- *     summary: Create a new PartnershipSpecification
- *     tags: [PartnershipSpecification]
+ *     summary: Create a new Partnership
+ *     tags: [Partnership]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/PartnershipSpecification'
+ *             $ref: '#/components/schemas/Partnership'
  *     responses:
  *       201:
- *         description: PartnershipSpecification created successfully
+ *         description: Partnership created successfully
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/PartnershipSpecification'
+ *               $ref: '#/components/schemas/Partnership'
  *       400:
  *         description: Validation error
  */
 
-// CREATE: Add a new PartnershipSpecification
-// POST /partnershipSpecification
+// CREATE: Add a new Partnership
+// POST /partnership
 router.post('/', async (req, res) => {
   try {
-    // Create a new PartnershipSpecification from request body
-    const spec = new PartnershipSpecification(req.body);
-    const savedSpec = await spec.save();
-    res.status(201).json(savedSpec);
+    // Create a new Partnership from request body
+    const partnership = new Partnership(req.body);
+    const savedPartnership = await partnership.save();
+    res.status(201).json(savedPartnership);
   } catch (err) {
     // Handle Mongoose validation errors
     if (err.name === 'ValidationError') {
@@ -48,24 +48,24 @@ router.post('/', async (req, res) => {
 
 /**
  * @swagger
- * /partnershipSpecification:
+ * /partnership:
  *   get:
- *     summary: Get all PartnershipSpecifications
- *     tags: [PartnershipSpecification]
+ *     summary: Get all Partnerships
+ *     tags: [Partnership]
  *     responses:
  *       200:
- *         description: List of all PartnershipSpecifications
+ *         description: List of all Partnerships
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/PartnershipSpecification'
+ *                 $ref: '#/components/schemas/Partnership'
  */
 router.get('/', async (req, res) => {
   try {
-    const specs = await PartnershipSpecification.find();
-    res.json(specs);
+    const partnerships = await Partnership.find();
+    res.json(partnerships);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -73,32 +73,32 @@ router.get('/', async (req, res) => {
 
 /**
  * @swagger
- * /partnershipSpecification/{id}:
+ * /partnership/{id}:
  *   get:
- *     summary: Get a PartnershipSpecification by ID
- *     tags: [PartnershipSpecification]
+ *     summary: Get a Partnership by ID
+ *     tags: [Partnership]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
- *         description: PartnershipSpecification ID
+ *         description: Partnership ID
  *     responses:
  *       200:
- *         description: PartnershipSpecification found
+ *         description: Partnership found
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/PartnershipSpecification'
+ *               $ref: '#/components/schemas/Partnership'
  *       404:
- *         description: PartnershipSpecification not found
+ *         description: Partnership not found
  */
 router.get('/:id', async (req, res) => {
   try {
-    const spec = await PartnershipSpecification.findById(req.params.id);
-    if (!spec) return res.status(404).json({ error: 'Not found' });
-    res.json(spec);
+    const partnership = await Partnership.findById(req.params.id);
+    if (!partnership) return res.status(404).json({ error: 'Not found' });
+    res.json(partnership);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -106,48 +106,48 @@ router.get('/:id', async (req, res) => {
 
 /**
  * @swagger
- * /partnershipSpecification/{id}:
+ * /partnership/{id}:
  *   patch:
- *     summary: Update a PartnershipSpecification by ID
- *     tags: [PartnershipSpecification]
+ *     summary: Update a Partnership by ID
+ *     tags: [Partnership]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
- *         description: PartnershipSpecification ID
+ *         description: Partnership ID
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/PartnershipSpecification'
+ *             $ref: '#/components/schemas/Partnership'
  *     responses:
  *       200:
- *         description: PartnershipSpecification updated
+ *         description: Partnership updated
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/PartnershipSpecification'
+ *               $ref: '#/components/schemas/Partnership'
  *       400:
  *         description: Validation error
  *       404:
- *         description: PartnershipSpecification not found
+ *         description: Partnership not found
  */
 
-// UPDATE: Patch a PartnershipSpecification by ID
-// PATCH /partnershipSpecification/:id
+// UPDATE: Patch a Partnership by ID
+// PATCH /partnership/:id
 router.patch('/:id', async (req, res) => {
   try {
     // Only update provided fields
-    const updatedSpec = await PartnershipSpecification.findByIdAndUpdate(
+    const updatedPartnership = await Partnership.findByIdAndUpdate(
       req.params.id,
       { $set: req.body },
       { new: true, runValidators: true }
     );
-    if (!updatedSpec) return res.status(404).json({ error: 'Not found' });
-    res.json(updatedSpec);
+    if (!updatedPartnership) return res.status(404).json({ error: 'Not found' });
+    res.json(updatedPartnership);
   } catch (err) {
     // Handle Mongoose validation errors
     if (err.name === 'ValidationError') {
@@ -160,27 +160,27 @@ router.patch('/:id', async (req, res) => {
 
 /**
  * @swagger
- * /partnershipSpecification/{id}:
+ * /partnership/{id}:
  *   delete:
- *     summary: Delete a PartnershipSpecification by ID
- *     tags: [PartnershipSpecification]
+ *     summary: Delete a Partnership by ID
+ *     tags: [Partnership]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
- *         description: PartnershipSpecification ID
+ *         description: Partnership ID
  *     responses:
  *       200:
- *         description: PartnershipSpecification deleted
+ *         description: Partnership deleted
  *       404:
- *         description: PartnershipSpecification not found
+ *         description: Partnership not found
  */
 router.delete('/:id', async (req, res) => {
   try {
-    const deletedSpec = await PartnershipSpecification.findByIdAndDelete(req.params.id);
-    if (!deletedSpec) return res.status(404).json({ error: 'Not found' });
+    const deletedPartnership = await Partnership.findByIdAndDelete(req.params.id);
+    if (!deletedPartnership) return res.status(404).json({ error: 'Not found' });
     res.json({ message: 'Deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -192,18 +192,33 @@ router.delete('/:id', async (req, res) => {
  * @swagger
  * components:
  *   schemas:
- *     RoleSpecification:
+ *     Partner:
  *       type: object
  *       properties:
- *         name:
+ *         engagedParty:
  *           type: string
- *         description:
+ *         role:
  *           type: string
- *         requiresBilling:
- *           type: boolean
- *         requiresSettlement:
- *           type: boolean
- *     PartnershipSpecification:
+ *         account:
+ *           type: string
+ *         agreement:
+ *           type: string
+ *         paymentMethod:
+ *           type: string
+ *         contactMedium:
+ *           type: string
+ *         creditProfile:
+ *           type: string
+ *     ValidFor:
+ *       type: object
+ *       properties:
+ *         startDateTime:
+ *           type: string
+ *           format: date-time
+ *         endDateTime:
+ *           type: string
+ *           format: date-time
+ *     Partnership:
  *       type: object
  *       properties:
  *         _id:
@@ -212,14 +227,16 @@ router.delete('/:id', async (req, res) => {
  *           type: string
  *         description:
  *           type: string
- *         roleSpecification:
+ *         specification:
+ *           type: string
+ *         partner:
  *           type: array
  *           items:
- *             $ref: '#/components/schemas/RoleSpecification'
- *         agreementSpecification:
- *           type: array
- *           items:
- *             type: string
+ *             $ref: '#/components/schemas/Partner'
+ *         status:
+ *           type: string
+ *         validFor:
+ *           $ref: '#/components/schemas/ValidFor'
  *         href:
  *           type: string
  */
