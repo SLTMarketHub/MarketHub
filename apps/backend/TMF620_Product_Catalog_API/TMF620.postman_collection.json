@@ -1,0 +1,25 @@
+{
+  "info": {
+    "name": "TMF620 Product Catalog API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {"name": "Health", "request": {"method": "GET", "url": "{{baseUrl}}/health"}},
+    {"name": "Docs (PDF)", "request": {"method": "GET", "url": "{{baseUrl}}/api/v1/docs"}},
+    {"name": "Catalog Overview", "request": {"method": "GET", "url": "{{baseUrl}}/api/v1/productCatalog"}},
+    {"name": "Search", "request": {"method": "GET", "url": "{{baseUrl}}/api/v1/productCatalog/search?q=plan"}},
+    {"name": "List Catalogs", "request": {"method": "GET", "url": "{{baseUrl}}/api/v1/productCatalogs"}},
+    {"name": "Create Catalog", "request": {"method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode": "raw", "raw": "{\n  \"id\": \"CATALOG-001\",\n  \"name\": \"Default Product Catalog\"\n}"}, "url": "{{baseUrl}}/api/v1/productCatalogs"}},
+    {"name": "List Products", "request": {"method": "GET", "url": "{{baseUrl}}/api/v1/products"}},
+    {"name": "Create Product", "request": {"method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode": "raw", "raw": "{\n  \"id\": \"PROD-001\",\n  \"name\": \"Sample Product\"\n}"}, "url": "{{baseUrl}}/api/v1/products"}},
+    {"name": "List Categories", "request": {"method": "GET", "url": "{{baseUrl}}/api/v1/categories"}},
+    {"name": "List Product Specifications", "request": {"method": "GET", "url": "{{baseUrl}}/api/v1/productSpecifications"}},
+    {"name": "List Product Offerings", "request": {"method": "GET", "url": "{{baseUrl}}/api/v1/productOfferings"}},
+    {"name": "Register Hub", "request": {"method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode": "raw", "raw": "{\n  \"callback\": \"http://localhost:4000/webhook\"\n}"}, "url": "{{baseUrl}}/api/v1/hub"}}
+  ],
+  "variable": [
+    {"key": "baseUrl", "value": "http://localhost:3001"}
+  ]
+}
+
+
