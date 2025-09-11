@@ -1,12 +1,11 @@
-import { Request, Response, NextFunction } from 'express';
-import { body, validationResult, ValidationChain } from 'express-validator';
+import { body, validationResult } from 'express-validator';
 
-export const validateRequest = (req: Request, res: Response, next: NextFunction) => {
+export const validateRequest = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       success: false,
-      errors: errors.array() 
+      errors: errors.array(),
     });
   }
   next();
@@ -33,7 +32,7 @@ export const productValidationRules = {
       .optional()
       .isInt({ min: 0 }).withMessage('Stock count cannot be negative')
   ],
-  
+
   updateProduct: [
     body('name')
       .optional()
@@ -54,4 +53,6 @@ export const productValidationRules = {
       .optional()
       .isInt({ min: 0 }).withMessage('Stock count cannot be negative')
   ]
-} as const;
+};
+
+
