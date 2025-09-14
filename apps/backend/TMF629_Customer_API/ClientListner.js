@@ -9,7 +9,7 @@ app.post("/client/listener", (req, res) => {
     console.log(JSON.stringify(req.body, null, 2));
 
     receivedEvents.push(req.body);
-    if (receivedEvents.length > 5) {
+    if (receivedEvents.length > 50) {
         receivedEvents.shift();
     }
 
