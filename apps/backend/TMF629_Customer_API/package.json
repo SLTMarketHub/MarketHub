@@ -2,8 +2,9 @@
   "name": "customer-api",
   "version": "1.0.0",
   "main": "Server.js",
-  "scripts": {
-    "start": "concurrently \"node Server.js\" \"node ClientListner.js\""
+ "scripts": {
+    "start": "node server.js",
+    "server": "nodemon server.js"
   },
   "keywords": [],
   "author": "",

@@ -11,12 +11,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect(process.env.DATABASE_URL, {
+mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 })
-    .then(() => console.log("MongoDB Connected"))
-    .catch(err => console.error("Mongo Error:", err));
+    .then(() => console.log("Database Connected"))
+    .catch(err => console.error("Database Error:", err));
 
 app.use("/tmf-api/customerManagement/v5/customer", customerRoutes);
 app.use("/api/hub",hubRoutes);
