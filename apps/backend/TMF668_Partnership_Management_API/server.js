@@ -1,12 +1,6 @@
 // server.js
 // Entry point for TMF668 Partnership Management API
 
-
-
-
-
-
-
 const express = require('express');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
