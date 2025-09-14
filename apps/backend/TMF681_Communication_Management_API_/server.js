@@ -15,8 +15,8 @@ app.use(cors());
 app.use(express.json());
 
 
-app.use("/tmf-api/communicationManagement/v4", communicationRoutes);
-app.use("/tmf-api/communicationManagement/v4", hubRoutes);
+app.use("/communicationMessage/", communicationRoutes);
+app.use("/hub/", hubRoutes);
 
 
 const PORT = process.env.PORT || 5008;
