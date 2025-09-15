@@ -1,4 +1,5 @@
 const CustomerBill = require('../models/mainmodels/CustomerBill');
+const { createNotification } = require("../utils/notificationHelper");
 
 
 // Fetch all bill details (excluding deleted bills)
@@ -49,7 +50,8 @@ exports.createBill = async (req, res) => {
   try {
     const bill = new CustomerBill(req.body);
     const savedBill = await bill.save();  
-    console.log('New CustomerBill created!');
+    await createNotification("CustomerBillCreateEvent", savedBill, "customerBill", "Customer Bill created");
+
     
     res.status(201).json(savedBill);
 
@@ -59,8 +61,7 @@ exports.createBill = async (req, res) => {
 };
 
 
-
-//update the bill details
+// Update the bill details (partial update)
 exports.updateBillPartial = async (req, res) => {
   try {
     const { id } = req.params;
@@ -69,11 +70,21 @@ exports.updateBillPartial = async (req, res) => {
     const updatedBill = await CustomerBill.findOneAndUpdate(
       { id },
       { $set: patchData },
-      { new: true, runValidators: true } 
+      { new: true, runValidators: true }
     );
 
     if (!updatedBill) {
-      return res.status(404).json({ message: 'Bill not found' });
+      return res.status(404).json({ message: "Bill not found" });
+    }
+
+    // 🔔 Trigger notification only if "state" is being updated
+    if (patchData.state) {
+      await createNotification(
+        "CustomerBillStateChangeEvent",
+        updatedBill,
+        "customerBill",
+        "Customer Bill state changed"
+      );
     }
 
     res.json(updatedBill);
@@ -81,6 +92,7 @@ exports.updateBillPartial = async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 };
+
 
 // Soft delete a CustomerBill
 exports.deleteBill = async (req, res) => {

@@ -1,5 +1,5 @@
 const CustomerBillOnDemand = require("../models/mainmodels/CustomerBillOnDemand");
-const Notification = require('../models/mainmodels/Notification');  // Import Notification model
+const { createNotification } = require("../utils/notificationHelper");
 
 
 // Fetch all CustomerBillOnDemand (excluding deleted if needed)
@@ -48,6 +48,15 @@ exports.createBillOnDemand = async (req, res) => {
   try {
     const bill = new CustomerBillOnDemand(req.body);
     const savedBill = await bill.save();
+
+    // 🔔 Notification on create
+    await createNotification(
+      "CustomerBillOnDemandCreateEvent",
+      savedBill,
+      "customerBillOnDemand",
+      "Customer Bill On-Demand created"
+    );
+
     res.status(201).json(savedBill);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -58,13 +67,29 @@ exports.createBillOnDemand = async (req, res) => {
 exports.updateBillOnDemand = async (req, res) => {
   try {
     const { id } = req.params;
+    const patchData = req.body;
+
     const updatedBill = await CustomerBillOnDemand.findOneAndUpdate(
       { id },
-      { $set: req.body },
+      { $set: patchData },
       { new: true, runValidators: true }
     );
-    if (!updatedBill) return res.status(404).json({ message: 'Bill not found' });
-    res.json({ message: " BillOnDemand Details Updated !" },updatedBill);
+
+    if (!updatedBill) {
+      return res.status(404).json({ message: "Bill not found" });
+    }
+
+    // 🔔 Notification if state is updated
+    if (patchData.state) {
+      await createNotification(
+        "CustomerBillOnDemandStateChangeEvent",
+        updatedBill,
+        "customerBillOnDemand",
+        "Customer Bill On-Demand state changed"
+      );
+    }
+
+    res.json({ message: "Bill On-Demand details updated!", bill: updatedBill });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -76,12 +101,24 @@ exports.deleteBillOnDemand = async (req, res) => {
   try {
     const { id } = req.params;
     const deletedBill = await CustomerBillOnDemand.findOneAndUpdate(
-      { id },
-      { $set: { isDeleted: true } },
+      { id, isDeleted: false },
+      { $set: { isDeleted: true, deletedAt: new Date() } },
       { new: true }
     );
-    if (!deletedBill) return res.status(404).json({ message: 'Bill not found' });
-    res.json({ message: 'BillOnDemand Details deleted successfully!' });
+
+    if (!deletedBill) {
+      return res.status(404).json({ message: "Bill not found or already deleted" });
+    }
+
+    // 🔔 Notification on delete
+    await createNotification(
+      "CustomerBillOnDemandDeleteEvent",
+      deletedBill,
+      "customerBillOnDemand",
+      "Customer Bill On-Demand deleted"
+    );
+
+    res.json({ message: "Bill On-Demand deleted successfully!", bill: deletedBill });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
