@@ -87,7 +87,8 @@ exports.updateBillPartial = async (req, res) => {
       );
     }
 
-    res.json(updatedBill);
+    res.json({ message: 'Bill updated!',updatedBill});
+    
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -109,7 +110,7 @@ exports.deleteBill = async (req, res) => {
       return res.status(404).json({ message: 'Bill not found or already deleted' });
     }
 
-    res.json({ message: 'Bill Deleted!', bill: deletedBill });
+    res.status(404).json({ message: 'Bill Deleted!'});
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

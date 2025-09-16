@@ -118,7 +118,7 @@ exports.deleteBillOnDemand = async (req, res) => {
       "Customer Bill On-Demand deleted"
     );
 
-    res.json({ message: "Bill On-Demand deleted successfully!", bill: deletedBill });
+    res.status(404).json({ message: "Bill On-Demand deleted successfully!" });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
