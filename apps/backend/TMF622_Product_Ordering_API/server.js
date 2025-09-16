@@ -4,9 +4,9 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 
 // Import routes
-import productOrderRoutes from './routes/productOrderRoutes';
-import cancelProductOrderRoutes from './routes/cancelProductOrderRoutes';
-import hubRoutes from './routes/hubRoutes';
+import productOrderRoutes from './routes/productOrderRoutes.js';
+import cancelProductOrderRoutes from './routes/cancelProductOrderRoutes.js';
+import hubRoutes from './routes/hubRoutes.js';
 
 // Import error handler middleware
 import errorHandler from './middleware/errorHandler';
