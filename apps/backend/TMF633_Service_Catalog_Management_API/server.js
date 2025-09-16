@@ -4,7 +4,12 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 const app = express();
+<<<<<<< HEAD
 const port = process.env.PORT || 3000;
+=======
+const port = process.env.PORT || 5005;
+const BASE_URL = '/tmf-api/serviceCatalogManagement/v4';
+>>>>>>> 77e65f84a76cb2f4080e678e1bec853915eeab69
 
 app.use(express.json());
 app.use(cors());
