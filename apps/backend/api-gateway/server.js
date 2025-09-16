@@ -8,25 +8,25 @@ const app = express();
 app.use(cors());
 
 // Auth Service
-app.use("/tmf-api/authService/v4", createProxyMiddleware({
+app.use("/tmf-api/authService/", createProxyMiddleware({
   target: process.env.AUTH_URL || "http://localhost:5001",
   changeOrigin: true
 }));
 
 // TMF620 - Product Catalog API
-app.use("/tmf-api/productCatalog/v4", createProxyMiddleware({
+app.use("/tmf-api/productCatalog/v5", createProxyMiddleware({
   target: process.env.TMF620_URL || "http://localhost:5002",
   changeOrigin: true
 }));
 
 // TMF622 - Product Ordering API
-app.use("/tmf-api/productOrdering/v4", createProxyMiddleware({
+app.use("/tmf-api/productOrdering/v1", createProxyMiddleware({
   target: process.env.TMF622_URL || "http://localhost:5003",
   changeOrigin: true
 }));
 
 // TMF629 - Customer API
-app.use("/tmf-api/customer/v4", createProxyMiddleware({
+app.use("/tmf-api/customer/v5", createProxyMiddleware({
   target: process.env.TMF629_URL || "http://localhost:5004",
   changeOrigin: true
 }));
@@ -44,7 +44,7 @@ app.use("/tmf-api/partnershipManagement/v4", createProxyMiddleware({
 }));
 
 // TMF678 - Customer Bill API
-app.use("/tmf-api/customerBill/v4", createProxyMiddleware({
+app.use("/tmf-api/customerBill/v5", createProxyMiddleware({
   target: process.env.TMF678_URL || "http://localhost:5007",
   changeOrigin: true
 }));
