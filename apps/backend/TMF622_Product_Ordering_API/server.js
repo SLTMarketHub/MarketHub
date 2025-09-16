@@ -9,7 +9,7 @@ import cancelProductOrderRoutes from './routes/cancelProductOrderRoutes.js';
 import hubRoutes from './routes/hubRoutes.js';
 
 // Import error handler middleware
-import errorHandler from './middleware/errorHandler';
+import errorHandler from './middleware/errorHandler.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
