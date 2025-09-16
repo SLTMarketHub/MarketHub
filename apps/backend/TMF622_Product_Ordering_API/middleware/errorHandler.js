@@ -11,7 +11,7 @@ export default class ApiError extends Error {
   }
 }
 
-export  const errorHandler = (err, req, res, next) => {
+export const errorHandler = (err, req, res, next) => {
   let { statusCode = 500, message } = err;
 
   if (err.name === 'ValidationError') {
@@ -47,5 +47,3 @@ export const notFound = (req, res, next) => {
   error.statusCode = 404;
   next(error);
 };
-
-
