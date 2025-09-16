@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 
-type Role = "Customer" | "Partner" ;
+type Role = "Admin" | "Customer" | "Partner" ;
 
 const RegisterPage: React.FC = () => {
     const navigate = useNavigate();
@@ -97,11 +97,11 @@ const RegisterPage: React.FC = () => {
                 return;
             }
 
-                navigate(
-                    `/complete-signup?email=${encodeURIComponent(formData.email)}&username=${encodeURIComponent(
-                        formData.username
-                    )}&password=${encodeURIComponent(formData.password)}&role=${formData.role}&from=manual`
-                 );
+            navigate(
+                `/complete-signup?email=${encodeURIComponent(formData.email)}&username=${encodeURIComponent(
+                    formData.username
+                )}&password=${encodeURIComponent(formData.password)}&role=${formData.role}&from=manual`
+            );
 
         } catch (err) {
             setMessage("Server error while sending OTP");
@@ -214,7 +214,8 @@ const RegisterPage: React.FC = () => {
                     >
                         <option value="Customer">Customer</option>
                         <option value="Partner">Partner</option>
-                        {/*<option value="Admin">Admin</option>*/}
+                        <option value="Admin">Admin</option>
+
                     </select>
 
                     <button

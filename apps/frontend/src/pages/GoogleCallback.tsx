@@ -14,18 +14,27 @@ const GoogleCallback: React.FC = () => {
         const username = params.get("username");
 
         if (token && role && username) {
-                // Decode JWT
-                const decoded: any = jwtDecode(token);
+            // Decode JWT
+            const decoded: any = jwtDecode(token);
 
-                setAuthUser({
-                    id: decoded.id,
-                    name: decoded.username || "",   // username from token
-                    email: decoded.email || "",     // email from token
-                    role: (decoded.role || "customer").toLowerCase() as 'customer' | 'partner',
-                    authProvider: 'google',
-                    token,
-                });
-            navigate("/dashboard");
+            setAuthUser({
+                id: decoded.id,
+                name: decoded.username || "",   // username from token
+                email: decoded.email || "",     // email from token
+                role: (decoded.role || "customer").toLowerCase() as 'customer' | 'partner'| 'admin',
+                authProvider: 'google',
+                token,
+            });
+
+            if (role.toLowerCase() === "partner") {
+                navigate("/partner");
+            } else if (role.toLowerCase() === "customer") {
+                navigate("/dashboard");
+            } else if (role.toLowerCase() === "admin") {
+                navigate("/admin");
+            } else {
+                navigate("/");
+            }
         }
     }, [setAuthUser, navigate]);
 

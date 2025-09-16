@@ -55,7 +55,6 @@ const CompleteSignupPage: React.FC = () => {
 
         setLoading(true);
         try {
-            console.log("VITE_URI : ",import.meta.env.VITE_API_URL)
             const res = await fetch("http://localhost:3050/api/auth/send-otp", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
