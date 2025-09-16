@@ -18,7 +18,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Routes (mirror TMF681 base path style)
-app.use('/tmf-api/productOrdering/v4', productRoutes);
+app.use('/tmf-api/productOrdering/v1', productRoutes);
 
 // 404 handler
 app.use(notFound);
@@ -27,7 +27,7 @@ app.use(notFound);
 app.use(errorHandler);
 
 // Database connection and server start
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/productOrderDB';
+const MONGODB_URI = process.env.MONGODB_URI ;
 const PORT = process.env.PORT || 3001;
 
 mongoose
