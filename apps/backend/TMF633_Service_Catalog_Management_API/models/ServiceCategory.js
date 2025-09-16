@@ -1,30 +1,10 @@
 const mongoose = require('mongoose');
 
-const ServiceCategorySchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  href: { type: String },
+const serviceCategorySchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String },
-  version: { type: String },
-  lifecycleStatus: { type: String, enum: ['InDesign', 'Active', 'Deprecated', 'Retired'], default: 'InDesign' },
-  lastUpdate: { type: String },
-
-  parentId: { type: String }, // link to parent category
-  isRoot: { type: Boolean, default: false },
-
-  serviceCandidate: [{
-    id: { type: String },
-    href: { type: String },
-    name: { type: String }
-  }],
-
-  relatedParty: [{
-    id: { type: String },
-    name: { type: String },
-    role: { type: String }
-  }],
-
-  '@type': { type: String, default: 'ServiceCategory' }
+  lastUpdate: { type: Date, default: Date.now },
+  lifecycleStatus: { type: String, default: 'Active' },
 }, { timestamps: true });
 
-module.exports = mongoose.model('ServiceCategory', ServiceCategorySchema);
+module.exports = mongoose.model('ServiceCategory', serviceCategorySchema);

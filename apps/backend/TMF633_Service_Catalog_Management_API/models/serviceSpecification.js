@@ -1,13 +1,13 @@
 const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
-const ServiceSpecificationSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+const serviceSpecificationSchema = new mongoose.Schema({
+  uuid: { type: String, default: uuidv4 },
   name: { type: String, required: true },
-  description: { type: String },
-  version: { type: String },
-  href: { type: String },
-  lastUpdate: { type: String },
-  '@type': { type: String, default: 'ServiceSpecification' },
-}, { timestamps: true });
+  description: String,
+  isBundle: { type: Boolean, default: false },
+  lifecycleStatus: { type: String, default: 'Active' },
+  lastUpdate: { type: Date, default: Date.now }
+});
 
-module.exports = mongoose.model('ServiceSpecification', ServiceSpecificationSchema);
+module.exports = mongoose.model('ServiceSpecification', serviceSpecificationSchema);
