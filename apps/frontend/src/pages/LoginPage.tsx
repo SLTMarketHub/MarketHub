@@ -47,7 +47,16 @@ const LoginPage: React.FC = () => {
           token: data.token
         });
 
-        navigate("/dashboard");
+        if (mappedRole.toLowerCase() === "partner") {
+          navigate("/partner");
+        } else if (mappedRole.toLowerCase() === "customer") {
+          navigate("/dashboard");
+        } else if (mappedRole.toLowerCase() === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
+
       } else {
         setMessage(data.message || "Invalid credentials");
       }

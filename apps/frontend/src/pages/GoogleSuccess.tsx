@@ -38,15 +38,17 @@ const GoogleSuccess = () => {
             localStorage.setItem("user", JSON.stringify(user));
             setAuthUser(user);
 
-            if (role === "Partner"){
+            if (role.toLowerCase() === "partner") {
                 navigate("/partner");
-            } else if(role === "Customer"){
+            } else if (role.toLowerCase() === "customer") {
                 navigate("/dashboard");
+            } else if (role.toLowerCase() === "admin") {
+                navigate("/admin");
             } else {
-                navigate("/")
+                navigate("/");
             }
+
         } else if (needRole && email) {
-            // New Google user → need to pick role
             setGoogleUser({ email, name: name || "" });
         } else {
             navigate("/login");
@@ -80,11 +82,11 @@ const GoogleSuccess = () => {
                     <p className="mb-4">Choose your role to complete signup:</p>
                     <div className="flex justify-center gap-4">
                         <button
-                            onClick={() => completeGoogleSignup("Customer")}
+                            onClick={() => completeGoogleSignup("Admin")}
                             disabled={loading}
                             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
                         >
-                            Customer
+                            Admin
                         </button>
                         <button
                             onClick={() => completeGoogleSignup("Partner")}
@@ -92,6 +94,13 @@ const GoogleSuccess = () => {
                             className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50"
                         >
                             Partner
+                        </button>
+                        <button
+                            onClick={() => completeGoogleSignup("Customer")}
+                            disabled={loading}
+                            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+                        >
+                            Customer
                         </button>
                     </div>
                 </div>
@@ -103,3 +112,4 @@ const GoogleSuccess = () => {
 };
 
 export default GoogleSuccess;
+
