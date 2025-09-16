@@ -3,7 +3,7 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const EventHub = require('../models/EventHub');
 
-router.post('/hub', [
+router.post('/', [
   body('callback').isURL().withMessage('callback must be a valid URL'),
   body('query').optional().isString()
 ], async (req, res) => {
@@ -16,12 +16,12 @@ router.post('/hub', [
   res.status(201).json(hub);
 });
 
-router.get('/hub', async (_req, res) => {
+router.get('/', async (_req, res) => {
   const hubs = await EventHub.find();
   res.json(hubs);
 });
 
-router.delete('/hub/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const deleted = await EventHub.findByIdAndDelete(req.params.id);
   if (!deleted) return res.status(404).json({ error: 'Hub not found' });
   res.status(204).send();
