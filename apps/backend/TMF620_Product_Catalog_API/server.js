@@ -46,9 +46,9 @@ mongoose.connect(process.env.MONGODB_URI,{
 .catch(err => console.error('MongoDB connection error:', err));
 
 // Routes
-
-
 app.use('/category', require('./routes/categories'));
+app.use('/importJob', require('./routes/importJobs'));
+app.use('/exportJob', require('./routes/exportJobs'));
 app.use('/productCatalog', require('./routes/productCatalog'));
 app.use('/productOffering', require('./routes/productOfferings'));
 app.use('/productSpecification', require('./routes/productSpecifications'));
@@ -88,12 +88,14 @@ app.get('/', (req, res) => {
     documentation: '/tmf-api/productCatalog/v5/docs',
     health: '/health',
     endpoints: {
-      productCatalog: '/tmf-api/productCatalog/v5/productCatalog',
-      product: '/tmf-api/productCatalog/v5/product',
       category: '/tmf-api/productCatalog/v5/category',
-      productSpecification: '/tmf-api/productCatalog/v5/productSpecification',
+      importJob: '/tmf-api/productCatalog/v5/importJob',
+      exportJob: '/tmf-api/productCatalog/v5/exportJob',
+      productCatalog: '/tmf-api/productCatalog/v5/productCatalog',
       productOffering: '/tmf-api/productCatalog/v5/productOffering',
-      catalog: '/tmf-api/productCatalog/v5/catalog'
+      productSpecification: '/tmf-api/productCatalog/v5/productSpecification',      
+      productOfferingPrice: '/tmf-api/productCatalog/v5/productOfferingPrice',
+      hub: '/tmf-api/productCatalog/v5/hub'
     }
   });
 });
