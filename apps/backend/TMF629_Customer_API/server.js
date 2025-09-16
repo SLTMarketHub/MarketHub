@@ -24,10 +24,11 @@ mongoose
         const count = await EventHub.countDocuments();
         if (count === 0) {
             await EventHub.create({
-                callback: `http://localhost:${process.env.PORT || 3000}/client/listener`,
+                // callback: `http://localhost:${process.env.PORT || 3000}/client/listener`,
+                callback: `${process.env.BASE_URL || "https://markethub-api-gateway.onrender.com"}/client/listener`,
             });
             console.log(
-                `📌 Default listener registered at http://localhost:${process.env.PORT || 3000}/client/listener`
+                `📌 Default listener registered at ${process.env.BASE_URL || "https://markethub-api-gateway.onrender.com"}/client/listener`
             );
         } else {
             console.log("ℹ️ EventHub already has registered listeners.");
@@ -35,21 +36,21 @@ mongoose
     })
     .catch((err) => console.error("❌ Mongo Error:", err));
 
-app.use("/tmf-api/customerManagement/v5/customer", customerRoutes);
-app.use("/api/hub", hubRoutes);
+app.use("/tmf-api/customer/v5/customer", customerRoutes);
+app.use("/tmf-api/customer/v5/hub", hubRoutes);
 
 clientListenerRoutes(app);
 
 app.get("/", async (_req, res) => {
     try {
         const response = await axios.get(
-            `http://localhost:${process.env.PORT || 3000}/tmf-api/customerManagement/v5/customer`
+            `${process.env.BASE_URL || "https://markethub-api-gateway.onrender.com"}/tmf-api/customer/v5/customer`
         );
 
         res.send(`
       <h2>Customer Management API</h2>
       <h3>Default EventHub Listener</h3>
-      <p>📡 Callback URL: <strong>http://localhost:${process.env.PORT || 3000}/client/listener</strong></p>
+      <p>📡 Callback URL: <strong>${process.env.BASE_URL || "https://markethub-api-gateway.onrender.com"}/client/listener</strong></p>
       <h3>Customer Records</h3>
       <pre>${JSON.stringify(response.data, null, 2)}</pre>
     `);
@@ -60,7 +61,10 @@ app.get("/", async (_req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+const BASE = process.env.BASE_URL || "https://markethub-api-gateway.onrender.com"
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`🎧 Client listener available at http://localhost:${PORT}/client/listener`);
+    console.log(`BASE URL : ${BASE}`);
+    console.log(`API Path: /tmf-api/customer/v5/customer`);
+    console.log(`🎧 Client listener available at ${BASE}/client/listener`);
 });
