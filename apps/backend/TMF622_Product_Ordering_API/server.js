@@ -8,8 +8,7 @@ import productOrderRoutes from './routes/productOrderRoutes.js';
 import cancelProductOrderRoutes from './routes/cancelProductOrderRoutes.js';
 import hubRoutes from './routes/hubRoutes.js';
 
-// Import error handler middleware
-import errorHandler from './middleware/errorHandler.js';
+
 
 dotenv.config();
 console.log("MONGO_URI:", process.env.MONGO_URI); // Debug check
@@ -26,8 +25,7 @@ app.use('/productOrder', productOrderRoutes);
 app.use('/cancelProductOrder', cancelProductOrderRoutes);
 app.use('/hub', hubRoutes);
 
-// Error handling middleware (should be last)
-app.use(errorHandler);
+
 
 // MongoDB connection and server start
 mongoose.connect(process.env.MONGO_URI)
