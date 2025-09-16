@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const ServiceCatalog = require('../models/serviceCatalog');
+const ServiceCatalog = require('../models/ServiceCatalog');
 
 // POST
 router.post('/', async (req, res) => {
