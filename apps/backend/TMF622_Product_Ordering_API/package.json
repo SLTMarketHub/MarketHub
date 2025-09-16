@@ -1,23 +1,40 @@
 {
-  "name": "product-order-api",
+  "name": "tmf622-product-ordering-api",
   "version": "1.0.0",
-  "description": "TMF622 Product Ordering API",
+  "description": "TMF622 Product Ordering API - TM Forum compliant REST API",
   "main": "server.js",
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "server": "nodemon server.js"
+    "server": "nodemon server.js",
+    "dev": "set NODE_ENV=development&& nodemon server.js",
+    "prod": "set NODE_ENV=production&& node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-async-handler": "^1.2.0",
+    "express-rate-limit": "^8.1.0",
     "express-validator": "^7.0.1",
+    "helmet": "^8.1.0",
     "mongoose": "^8.0.3",
     "morgan": "^1.10.1",
-    "nodemon": "^3.0.2"
+    "nodemon": "^3.0.2",
+    "uuid": "^9.0.1"
   },
   "engines": {
     "node": ">=14.0.0"
-  }
+  },
+  "keywords": [
+    "tmf622",
+    "tm-forum",
+    "product-ordering",
+    "api",
+    "rest"
+  ],
+  "author": "SLT MarketHub Team",
+  "license": "MIT"
 }
