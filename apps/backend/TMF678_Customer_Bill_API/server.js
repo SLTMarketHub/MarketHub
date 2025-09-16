@@ -29,7 +29,7 @@ app.use('/notifications', notificationRoutes);
 
 //hub
 const hubRoutes = require('./routes/hubRoutes');
-app.use('/api',hubRoutes);
+app.use('/hub',hubRoutes);
 
 // Database Connection
 mongoose.connect(process.env.MONGO_URI)

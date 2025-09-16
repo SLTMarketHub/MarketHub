@@ -27,12 +27,17 @@ exports.getBillCycleById = async (req, res) => {
 exports.getSelectedBillCycleFields = async (req, res) => {
   try {
     // Example: /fields?fields=id,billingDate
-    const fields = req.query.fields ? req.query.fields.replace(/,/g, ' ') : '';
+    const fieldsQuery = req.query.fields;
+
+    // If no fields are requested, return all fields
+    const fields = fieldsQuery ? fieldsQuery.split(',').join(' ') : '';
 
     const billCycles = await BillCycle.find({}, fields);
 
+    // Always return an array (empty if none found)
     res.json(billCycles);
   } catch (err) {
+    console.error("Error fetching selected BillCycle fields:", err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -74,7 +79,7 @@ exports.deleteBillCycle = async (req, res) => {
   try {
     const deletedBillCycle = await BillCycle.findOneAndDelete({ id: req.params.id });
     if (!deletedBillCycle) return res.status(404).json({ message: 'BillCycle not found' });
-    res.json({ message: 'BillCycle deleted successfully' });
+    res.status(404).json({ message: 'BillCycle deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
