@@ -1,7 +1,7 @@
 const ProductOffering = require('../models/ProductOffering');
 const { publishEvent } = require('../services/eventPublisher');
 
-// GET /api/v1/productOfferings - List product offerings with filtering and pagination
+// GET /tmf-api/productCatalog/v5/productOffering - List product offerings with filtering and pagination
 const listProductOfferings = async (req, res) => {
   try {
     const {
@@ -58,7 +58,7 @@ const listProductOfferings = async (req, res) => {
   }
 };
 
-// GET /api/v1/productOfferings/:id - Get product offering by ID
+// GET /tmf-api/productCatalog/v5/productOffering/:id - Get product offering by ID
 const getProductOffering = async (req, res) => {
   try {
     const { fields } = req.query;
@@ -83,12 +83,12 @@ const getProductOffering = async (req, res) => {
   }
 };
 
-// POST /api/v1/productOfferings - Create new product offering
+// POST /tmf-api/productCatalog/v5/productOffering - Create new product offering
 const createProductOffering = async (req, res) => {
   try {
     // Set href if not provided
     if (!req.body.href) {
-      req.body.href = `/api/v1/productOfferings/${req.body.id}`;
+      req.body.href = `/tmf-api/productCatalog/v5/productOffering/${req.body.id}`;
     }
 
     const productOffering = new ProductOffering(req.body);
@@ -104,7 +104,7 @@ const createProductOffering = async (req, res) => {
   }
 };
 
-// PATCH /api/v1/productOfferings/:id - Update product offering
+// PATCH /tmf-api/productCatalog/v5/productOffering/:id - Update product offering
 const updateProductOffering = async (req, res) => {
   try {
     const productOffering = await ProductOffering.findOneAndUpdate(
@@ -124,7 +124,7 @@ const updateProductOffering = async (req, res) => {
   }
 };
 
-// DELETE /api/v1/productOfferings/:id - Delete product offering
+// DELETE /tmf-api/productCatalog/v5/productOffering/:id - Delete product offering
 const deleteProductOffering = async (req, res) => {
   try {
     const productOffering = await ProductOffering.findOneAndDelete({ id: req.params.id });

@@ -1,10 +1,10 @@
-const Product = require('../models/Product');
+const Product = require('../models/ProductOfferingPrice');
 const Category = require('../models/Category');
 const ProductSpecification = require('../models/ProductSpecification');
 const ProductOffering = require('../models/ProductOffering');
 const ProductCatalog = require('../models/ProductCatalog');
 
-// GET /api/v1/productCatalog - Get catalog overview with statistics
+// GET /tmf-api/productCatalog/v5/productCatalog - Get catalog overview with statistics
 const getCatalogOverview = async (req, res) => {
   try {
     const [
@@ -40,10 +40,10 @@ const getCatalogOverview = async (req, res) => {
         },
         catalogs,
         endpoints: {
-          products: '/api/v1/products',
-          categories: '/api/v1/categories',
-          productSpecifications: '/api/v1/productSpecifications',
-          productOfferings: '/api/v1/productOfferings'
+          products: '/tmf-api/productCatalog/v5/product',
+          categories: '/tmf-api/productCatalog/v5/category',
+          productSpecifications: '/tmf-api/productCatalog/v5/productSpecification',
+          productOfferings: '/tmf-api/productCatalog/v5/productOffering'
         }
       }
     });
@@ -52,7 +52,7 @@ const getCatalogOverview = async (req, res) => {
   }
 };
 
-// GET /api/v1/productCatalog/search - Global search across all entities
+// GET /tmf-api/productCatalog/v5/productCatalog/search - Global search across all entities
 const globalSearch = async (req, res) => {
   try {
     const { q, type, limit = 20 } = req.query;
@@ -121,7 +121,7 @@ const globalSearch = async (req, res) => {
   }
 };
 
-// GET /api/v1/productCatalogs - List product catalogs
+// GET /tmf-api/productCatalog/v5/catalog - List product catalogs
 const listProductCatalogs = async (req, res) => {
   try {
     const { offset = 0, limit = 20, name } = req.query;
@@ -149,7 +149,7 @@ const listProductCatalogs = async (req, res) => {
   }
 };
 
-// GET /api/v1/productCatalogs/:id - Get product catalog by ID
+// GET /tmf-api/productCatalog/v5/catalog/:id - Get product catalog by ID
 const getProductCatalog = async (req, res) => {
   try {
     const catalog = await ProductCatalog.findOne({ id: req.params.id });
@@ -164,12 +164,12 @@ const getProductCatalog = async (req, res) => {
   }
 };
 
-// POST /api/v1/productCatalogs - Create new product catalog
+// POST /tmf-api/productCatalog/v5/catalog - Create new product catalog
 const createProductCatalog = async (req, res) => {
   try {
     // Set href if not provided
     if (!req.body.href) {
-      req.body.href = `/api/v1/productCatalogs/${req.body.id}`;
+      req.body.href = `/tmf-api/productCatalog/v5/catalog/${req.body.id}`;
     }
 
     const catalog = new ProductCatalog(req.body);
@@ -184,7 +184,7 @@ const createProductCatalog = async (req, res) => {
   }
 };
 
-// PATCH /api/v1/productCatalogs/:id - Update product catalog
+// PATCH /tmf-api/productCatalog/v5/catalog/:id - Update product catalog
 const updateProductCatalog = async (req, res) => {
   try {
     const catalog = await ProductCatalog.findOneAndUpdate(
@@ -203,7 +203,7 @@ const updateProductCatalog = async (req, res) => {
   }
 };
 
-// DELETE /api/v1/productCatalogs/:id - Delete product catalog
+// DELETE /tmf-api/productCatalog/v5/catalog/:id - Delete product catalog
 const deleteProductCatalog = async (req, res) => {
   try {
     const catalog = await ProductCatalog.findOneAndDelete({ id: req.params.id });

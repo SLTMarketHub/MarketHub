@@ -1,7 +1,7 @@
-const Product = require('../models/Product');
+const Product = require('../models/ProductOfferingPrice');
 const { publishEvent } = require('../services/eventPublisher');
 
-// GET /api/v1/products - List products with filtering and pagination
+// GET /tmf-api/productCatalog/v5/product - List products with filtering and pagination
 const listProducts = async (req, res) => {
   try {
     const {
@@ -58,7 +58,7 @@ const listProducts = async (req, res) => {
   }
 };
 
-// GET /api/v1/products/:id - Get product by ID
+// GET /tmf-api/productCatalog/v5/product/:id - Get product by ID
 const getProduct = async (req, res) => {
   try {
     const { fields } = req.query;
@@ -83,12 +83,12 @@ const getProduct = async (req, res) => {
   }
 };
 
-// POST /api/v1/products - Create new product
+// POST /tmf-api/productCatalog/v5/product - Create new product
 const createProduct = async (req, res) => {
   try {
     // Set href if not provided
     if (!req.body.href) {
-      req.body.href = `/api/v1/products/${req.body.id}`;
+      req.body.href = `/tmf-api/productCatalog/v5/productOfferingPrice/${req.body.id}`;
     }
 
     const product = new Product(req.body);
@@ -104,7 +104,7 @@ const createProduct = async (req, res) => {
   }
 };
 
-// PATCH /api/v1/products/:id - Update product
+// PATCH /tmf-api/productCatalog/v5/product/:id - Update product
 const updateProduct = async (req, res) => {
   try {
     const product = await Product.findOneAndUpdate(
@@ -124,7 +124,7 @@ const updateProduct = async (req, res) => {
   }
 };
 
-// DELETE /api/v1/products/:id - Delete product
+// DELETE /tmf-api/productCatalog/v5/product/:id - Delete product
 const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findOneAndDelete({ id: req.params.id });

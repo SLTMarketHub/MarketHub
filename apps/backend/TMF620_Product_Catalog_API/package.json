@@ -1,7 +1,7 @@
 {
   "name": "tmf620-product-catalog-api",
-  "version": "1.0.0",
-  "description": "TMF620 Product Catalog Management API",
+  "version": "5.0.0",
+  "description": "TMF620 Product Catalog Management API v5",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

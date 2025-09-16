@@ -19,10 +19,16 @@ const limiter = rateLimit({
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
   message: 'Too many requests from this IP, please try again later.'
 });
-app.use('/api/', limiter);
+app.use('/tmf-api/', limiter);
 
 // CORS configuration
-app.use(cors());
+//app.use(cors());
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:3000'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -32,7 +38,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(morgan('combined'));
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/tmf620_product_catalog', {
+mongoose.connect(process.env.MONGODB_URI,{
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
@@ -40,18 +46,20 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/tmf620_pr
 .catch(err => console.error('MongoDB connection error:', err));
 
 // Routes
-app.use('/api/v1/productCatalog', require('./routes/productCatalog'));
-app.use('/api/v1/products', require('./routes/products'));
-app.use('/api/v1/categories', require('./routes/categories'));
-app.use('/api/v1/productSpecifications', require('./routes/productSpecifications'));
-app.use('/api/v1/productOfferings', require('./routes/productOfferings'));
-app.use('/api/v1', require('./routes/hubRoutes'));
-app.use('/api/v1/productCatalogs', require('./routes/productCatalogs'));
+
+
+app.use('/category', require('./routes/categories'));
+app.use('/productCatalog', require('./routes/productCatalog'));
+app.use('/productOffering', require('./routes/productOfferings'));
+app.use('/productSpecification', require('./routes/productSpecifications'));
+app.use('/productOfferingPrice', require('./routes/productOfferingPrice'));
+app.use('/hub', require('./routes/hubRoutes'));
+
 
 // Serve docs PDF under /api/v1/docs
 const path = require('path');
 const docsPdfPath = path.join(__dirname, '..', '..', '..', 'docs', 'API docs', 'TMF620_Product_Catalog_userguide.pdf');
-app.get('/api/v1/docs', (req, res) => {
+app.get('/tmf-api/productCatalog/v5/docs', (req, res) => {
   res.sendFile(docsPdfPath, err => {
     if (err) {
       res.status(500).json({ error: 'Unable to serve documentation PDF' });
@@ -65,7 +73,8 @@ app.get('/health', (req, res) => {
     status: 'OK',
     timestamp: new Date().toISOString(),
     service: 'TMF620 Product Catalog API',
-    version: '1.0.0'
+    version: '5.0.0',
+    baseUrl: 'https://markethub-api-gateway.onrender.com'
   });
 });
 
@@ -73,9 +82,19 @@ app.get('/health', (req, res) => {
 app.get('/', (req, res) => {
   res.json({
     message: 'TMF620 Product Catalog API',
-    version: '1.0.0',
-    documentation: '/api/v1/docs',
-    health: '/health'
+    version: '5.0.0',
+    baseUrl: 'https://markethub-api-gateway.onrender.com',
+    apiPath: '/tmf-api/productCatalog/v5',
+    documentation: '/tmf-api/productCatalog/v5/docs',
+    health: '/health',
+    endpoints: {
+      productCatalog: '/tmf-api/productCatalog/v5/productCatalog',
+      product: '/tmf-api/productCatalog/v5/product',
+      category: '/tmf-api/productCatalog/v5/category',
+      productSpecification: '/tmf-api/productCatalog/v5/productSpecification',
+      productOffering: '/tmf-api/productCatalog/v5/productOffering',
+      catalog: '/tmf-api/productCatalog/v5/catalog'
+    }
   });
 });
 
@@ -98,6 +117,8 @@ app.use('*', (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`TMF620 Product Catalog API server running on port ${PORT}`);
+  console.log(`TMF620 Product Catalog API v5 server running on port ${PORT}`);
+  console.log(`Base URL: https://markethub-api-gateway.onrender.com`);
+  console.log(`API Path: /tmf-api/productCatalog/v5`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
