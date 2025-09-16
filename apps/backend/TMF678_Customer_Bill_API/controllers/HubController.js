@@ -20,6 +20,26 @@ exports.registerListener = async (req, res) => {
   }
 };
 
+//update a listener
+exports.updateListener = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { callback, query } = req.body;
+
+    const updated = await Hub.findByIdAndUpdate(
+      id,
+      { callback, query },
+      { new: true }
+    );
+
+    if (!updated) return res.status(404).json({ message: "Listener not found" });
+
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // Unregister a listener
 exports.unregisterListener = async (req, res) => {
   try {

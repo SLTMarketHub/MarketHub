@@ -74,7 +74,7 @@ exports.deleteBillCycle = async (req, res) => {
   try {
     const deletedBillCycle = await BillCycle.findOneAndDelete({ id: req.params.id });
     if (!deletedBillCycle) return res.status(404).json({ message: 'BillCycle not found' });
-    res.json({ message: 'BillCycle deleted successfully', billCycle: deletedBillCycle });
+    res.json({ message: 'BillCycle deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
