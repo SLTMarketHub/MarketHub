@@ -1,7 +1,7 @@
 const ProductSpecification = require('../models/ProductSpecification');
 const { publishEvent } = require('../services/eventPublisher');
 
-// GET /api/v1/productSpecifications - List product specifications with filtering and pagination
+// GET /tmf-api/productCatalog/v5/productSpecification - List product specifications with filtering and pagination
 const listProductSpecifications = async (req, res) => {
   try {
     const {
@@ -58,7 +58,7 @@ const listProductSpecifications = async (req, res) => {
   }
 };
 
-// GET /api/v1/productSpecifications/:id - Get product specification by ID
+// GET /tmf-api/productCatalog/v5/productSpecification/:id - Get product specification by ID
 const getProductSpecification = async (req, res) => {
   try {
     const { fields } = req.query;
@@ -83,12 +83,12 @@ const getProductSpecification = async (req, res) => {
   }
 };
 
-// POST /api/v1/productSpecifications - Create new product specification
+// POST /tmf-api/productCatalog/v5/productSpecification - Create new product specification
 const createProductSpecification = async (req, res) => {
   try {
     // Set href if not provided
     if (!req.body.href) {
-      req.body.href = `/api/v1/productSpecifications/${req.body.id}`;
+      req.body.href = `/tmf-api/productCatalog/v5/productSpecification/${req.body.id}`;
     }
 
     const productSpecification = new ProductSpecification(req.body);
@@ -104,7 +104,7 @@ const createProductSpecification = async (req, res) => {
   }
 };
 
-// PATCH /api/v1/productSpecifications/:id - Update product specification
+// PATCH /tmf-api/productCatalog/v5/productSpecification/:id - Update product specification
 const updateProductSpecification = async (req, res) => {
   try {
     const productSpecification = await ProductSpecification.findOneAndUpdate(
@@ -124,7 +124,7 @@ const updateProductSpecification = async (req, res) => {
   }
 };
 
-// DELETE /api/v1/productSpecifications/:id - Delete product specification
+// DELETE /tmf-api/productCatalog/v5/productSpecification/:id - Delete product specification
 const deleteProductSpecification = async (req, res) => {
   try {
     const productSpecification = await ProductSpecification.findOneAndDelete({ id: req.params.id });

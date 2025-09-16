@@ -1,6 +1,6 @@
-# TMF620 Product Catalog API
+# TMF620 Product Catalog API v5
 
-A comprehensive Product Catalog Management API built with the MERN stack, following TMF620 standards from TM Forum.
+A comprehensive Product Catalog Management API built with the MERN stack, following TMF620 v5 standards from TM Forum.
 
 ## Features
 
@@ -9,7 +9,7 @@ A comprehensive Product Catalog Management API built with the MERN stack, follow
 - **Product Specifications**: Detailed product specification management
 - **Product Offerings**: Product offering lifecycle management
 - **Search & Filtering**: Advanced search capabilities across all entities
-- **TMF620 Compliance**: Follows TM Forum TMF620 API standards
+- **TMF620 v5 Compliance**: Follows TM Forum TMF620 API v5 standards
 - **RESTful API**: Clean REST endpoints with proper HTTP methods
 - **Data Validation**: Comprehensive input validation and error handling
 - **MongoDB Integration**: Scalable NoSQL database with optimized schemas
@@ -91,45 +91,52 @@ npm install
 npm start
 ```
 
-The frontend will be available at `http://localhost:3000` and will proxy API requests to `http://localhost:3001`.
+The frontend will be available at `http://localhost:3000` and will proxy API requests to the hosted API.
 
 ## API Endpoints
 
 ### Base URL
 ```
-http://localhost:3001/api/v1
+https://markethub-api-gateway.onrender.com/tmf-api/productCatalog/v5
 ```
 
 ### Products
-- `GET /products` - List products with filtering and pagination
-- `GET /products/:id` - Get product by ID
-- `POST /products` - Create new product
-- `PATCH /products/:id` - Update product
-- `DELETE /products/:id` - Delete product
+- `GET /product` - List products with filtering and pagination
+- `GET /product/:id` - Get product by ID
+- `POST /product` - Create new product
+- `PATCH /product/:id` - Update product
+- `DELETE /product/:id` - Delete product
 
 ### Categories
-- `GET /categories` - List categories with filtering and pagination
-- `GET /categories/:id` - Get category by ID
-- `GET /categories/:id/children` - Get child categories
-- `POST /categories` - Create new category
-- `PATCH /categories/:id` - Update category
-- `DELETE /categories/:id` - Delete category
+- `GET /category` - List categories with filtering and pagination
+- `GET /category/:id` - Get category by ID
+- `GET /category/:id/children` - Get child categories
+- `POST /category` - Create new category
+- `PATCH /category/:id` - Update category
+- `DELETE /category/:id` - Delete category
 
 ### Product Specifications
-- `GET /productSpecifications` - List product specifications
-- `GET /productSpecifications/:id` - Get specification by ID
-- `POST /productSpecifications` - Create new specification
-- `PATCH /productSpecifications/:id` - Update specification
-- `DELETE /productSpecifications/:id` - Delete specification
+- `GET /productSpecification` - List product specifications
+- `GET /productSpecification/:id` - Get specification by ID
+- `POST /productSpecification` - Create new specification
+- `PATCH /productSpecification/:id` - Update specification
+- `DELETE /productSpecification/:id` - Delete specification
 
 ### Product Offerings
-- `GET /productOfferings` - List product offerings
-- `GET /productOfferings/:id` - Get offering by ID
-- `POST /productOfferings` - Create new offering
-- `PATCH /productOfferings/:id` - Update offering
-- `DELETE /productOfferings/:id` - Delete offering
+- `GET /productOffering` - List product offerings
+- `GET /productOffering/:id` - Get offering by ID
+- `POST /productOffering` - Create new offering
+- `PATCH /productOffering/:id` - Update offering
+- `DELETE /productOffering/:id` - Delete offering
 
-### Catalog
+### Product Catalogs
+- `GET /catalog` - List product catalogs
+- `GET /catalog/:id` - Get catalog by ID
+- `POST /catalog` - Create new catalog
+- `PATCH /catalog/:id` - Update catalog
+- `DELETE /catalog/:id` - Delete catalog
+
+### Catalog Overview
 - `GET /productCatalog` - Get catalog overview and statistics
 - `GET /productCatalog/search` - Global search across all entities
 
@@ -158,7 +165,7 @@ All list endpoints support filtering:
 
 ### Create a Product
 ```bash
-curl -X POST http://localhost:3001/api/v1/products \
+curl -X POST https://markethub-api-gateway.onrender.com/tmf-api/productCatalog/v5/product \
   -H "Content-Type: application/json" \
   -d '{
     "id": "PROD001",
@@ -173,12 +180,12 @@ curl -X POST http://localhost:3001/api/v1/products \
 
 ### Get Products with Filtering
 ```bash
-curl "http://localhost:3001/api/v1/products?lifecycleStatus=Active&limit=10&offset=0"
+curl "https://markethub-api-gateway.onrender.com/tmf-api/productCatalog/v5/product?lifecycleStatus=Active&limit=10&offset=0"
 ```
 
 ### Search Across Catalog
 ```bash
-curl "http://localhost:3001/api/v1/productCatalog/search?q=smartphone&type=product"
+curl "https://markethub-api-gateway.onrender.com/tmf-api/productCatalog/v5/productCatalog/search?q=smartphone&type=product"
 ```
 
 ## Data Models
@@ -254,6 +261,20 @@ TMF620_Product_Catalog_API/
 ├── tests/            # Test files
 ├── server.js         # Main server file
 └── package.json      # Dependencies
+```
+
+## API Documentation
+
+Access the complete API documentation at:
+```
+https://markethub-api-gateway.onrender.com/tmf-api/productCatalog/v5/docs
+```
+
+## Health Check
+
+Monitor API health at:
+```
+https://markethub-api-gateway.onrender.com/health
 ```
 
 ## Contributing

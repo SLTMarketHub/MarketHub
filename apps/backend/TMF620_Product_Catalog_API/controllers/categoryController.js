@@ -1,7 +1,7 @@
 const Category = require('../models/Category');
 const { publishEvent } = require('../services/eventPublisher');
 
-// GET /api/v1/categories - List categories with filtering and pagination
+// GET /tmf-api/productCatalog/v5/category - List categories with filtering and pagination
 const listCategories = async (req, res) => {
   try {
     const {
@@ -58,7 +58,7 @@ const listCategories = async (req, res) => {
   }
 };
 
-// GET /api/v1/categories/:id - Get category by ID
+// GET /tmf-api/productCatalog/v5/category/:id - Get category by ID
 const getCategory = async (req, res) => {
   try {
     const { fields } = req.query;
@@ -83,7 +83,7 @@ const getCategory = async (req, res) => {
   }
 };
 
-// GET /api/v1/categories/:id/children - Get child categories
+// GET /tmf-api/productCatalog/v5/category/:id/children - Get child categories
 const getCategoryChildren = async (req, res) => {
   try {
     const { fields } = req.query;
@@ -104,12 +104,12 @@ const getCategoryChildren = async (req, res) => {
   }
 };
 
-// POST /api/v1/categories - Create new category
+// POST /tmf-api/productCatalog/v5/category - Create new category
 const createCategory = async (req, res) => {
   try {
     // Set href if not provided
     if (!req.body.href) {
-      req.body.href = `/api/v1/categories/${req.body.id}`;
+      req.body.href = `/tmf-api/productCatalog/v5/category/${req.body.id}`;
     }
 
     const category = new Category(req.body);
@@ -125,7 +125,7 @@ const createCategory = async (req, res) => {
   }
 };
 
-// PATCH /api/v1/categories/:id - Update category
+// PATCH /tmf-api/productCatalog/v5/category/:id - Update category
 const updateCategory = async (req, res) => {
   try {
     const category = await Category.findOneAndUpdate(
@@ -145,7 +145,7 @@ const updateCategory = async (req, res) => {
   }
 };
 
-// DELETE /api/v1/categories/:id - Delete category
+// DELETE /tmf-api/productCatalog/v5/category/:id - Delete category
 const deleteCategory = async (req, res) => {
   try {
     const category = await Category.findOneAndDelete({ id: req.params.id });

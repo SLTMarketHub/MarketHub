@@ -1,13 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const { query, validationResult } = require('express-validator');
+const { body, validationResult, query } = require('express-validator');
 const productCatalogController = require('../controllers/productCatalogController');
 
-// Validation middleware for search query parameters
-const validateSearchParams = [
-  query('q').notEmpty().withMessage('Search query is required'),
-  query('type').optional().isIn(['product', 'category', 'specification', 'offering']),
-  query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be between 1 and 50')
+// Validation middleware
+const validateCatalog = [
+  body('id').notEmpty().withMessage('Catalog ID is required'),
+  body('name').notEmpty().withMessage('Catalog name is required'),
+  body('lifecycleStatus').optional().isIn(['InStudy', 'InDesign', 'InTest', 'Active', 'Launched', 'Retired', 'Obsolete'])
+];
+
+// Validation middleware for query parameters
+const validateQueryParams = [
+  query('offset').optional().isInt({ min: 0 }),
+  query('limit').optional().isInt({ min: 1, max: 100 })
 ];
 
 // Middleware to handle validation errors
@@ -20,7 +26,10 @@ const handleValidationErrors = (req, res, next) => {
 };
 
 // Routes
-router.get('/', productCatalogController.getCatalogOverview);
-router.get('/search', validateSearchParams, handleValidationErrors, productCatalogController.globalSearch);
+router.get('/', validateQueryParams, handleValidationErrors, productCatalogController.listProductCatalogs);
+router.get('/:id', productCatalogController.getProductCatalog);
+router.post('/', validateCatalog, handleValidationErrors, productCatalogController.createProductCatalog);
+router.patch('/:id', productCatalogController.updateProductCatalog);
+router.delete('/:id', productCatalogController.deleteProductCatalog);
 
 module.exports = router;
