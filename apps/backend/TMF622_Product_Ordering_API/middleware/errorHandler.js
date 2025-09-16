@@ -1,4 +1,4 @@
-export class ApiError extends Error {
+export default class ApiError extends Error {
   constructor(statusCode, message, isOperational = true, stack = '') {
     super(message);
     this.statusCode = statusCode;
@@ -11,7 +11,7 @@ export class ApiError extends Error {
   }
 }
 
-export const errorHandler = (err, req, res, next) => {
+export  const errorHandler = (err, req, res, next) => {
   let { statusCode = 500, message } = err;
 
   if (err.name === 'ValidationError') {
