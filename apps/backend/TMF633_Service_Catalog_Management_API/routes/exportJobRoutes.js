@@ -1,73 +1,39 @@
 const express = require('express');
-const { v4: uuidv4 } = require('uuid');
+const router = express.Router();
 const ExportJob = require('../models/ExportJob');
 
-const router = express.Router();
-
-/**
- * List export jobs
- * GET /exportJob
- */
-router.get('/', async (req, res) => {
-  try {
-    const jobs = await ExportJob.find();
-    res.status(200).json(jobs);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ code: 500, error: 'Internal server error' });
-  }
-});
-
-/**
- * Retrieve a specific export job
- * GET /exportJob/:id
- */
-router.get('/:id', async (req, res) => {
-  try {
-    const job = await ExportJob.findOne({ id: req.params.id });
-    if (!job) return res.status(404).json({ code: 404, error: 'Not found' });
-    res.status(200).json(job);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ code: 500, error: 'Internal server error' });
-  }
-});
-
-/**
- * Create a new export job
- * POST /exportJob
- */
+// POST
 router.post('/', async (req, res) => {
   try {
-    const id = req.body.id || uuidv4();
-    const now = new Date().toISOString();
-    const job = new ExportJob({
-      ...req.body,
-      id,
-      href: `${req.protocol}://${req.get('host')}${req.baseUrl}/${id}`,
-      creationDate: now,
-      status: req.body.status || 'InProgress',
-    });
+    const job = new ExportJob(req.body);
     await job.save();
     res.status(201).json(job);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ code: 500, error: 'Internal server error' });
+    res.status(400).json({ code: 'BadRequest', message: err.message });
   }
 });
 
-/**
- * Delete an export job
- * DELETE /exportJob/:id
- */
-router.delete('/:id', async (req, res) => {
+// GET all / filters
+router.get('/', async (req, res) => {
   try {
-    const deleted = await ExportJob.findOneAndDelete({ id: req.params.id });
-    if (!deleted) return res.status(404).json({ code: 404, error: 'Not found' });
-    res.status(204).send(); // No content
+    let query = {};
+    if (req.query.id) query._id = req.query.id;
+    if (req.query.status) query.status = req.query.status;
+    const jobs = await ExportJob.find(query);
+    res.json(jobs);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ code: 500, error: 'Internal server error' });
+    res.status(400).json({ code: 'BadRequest', message: err.message });
+  }
+});
+
+// GET by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const job = await ExportJob.findById(req.params.id);
+    if (!job) return res.status(404).json({ code: 'NotFound', message: 'ExportJob not found' });
+    res.json(job);
+  } catch (err) {
+    res.status(400).json({ code: 'BadRequest', message: err.message });
   }
 });
 

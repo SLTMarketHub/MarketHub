@@ -1,15 +1,11 @@
 const mongoose = require('mongoose');
 
-const ImportJobSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  href: { type: String },
-  path: { type: String, required: true },   // file path or resource path
-  status: { type: String, enum: ['InProgress', 'Completed', 'Failed'], default: 'InProgress' },
-  url: { type: String },  // source URL if applicable
-  creationDate: { type: String },
-  completionDate: { type: String },
-  errorLog: { type: String },
-  '@type': { type: String, default: 'ImportJob' },
+const importJobSchema = new mongoose.Schema({
+  jobName: { type: String, required: true },
+  status: { type: String, default: 'Pending' },
+  startDate: { type: Date, default: Date.now },
+  endDate: { type: Date },
+  errorDetails: { type: String },
 }, { timestamps: true });
 
-module.exports = mongoose.model('ImportJob', ImportJobSchema);
+module.exports = mongoose.model('ImportJob', importJobSchema);
