@@ -24,7 +24,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
 
-app.use('/authService', authRoutes);
+app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 
 app.use(errorHandler);
