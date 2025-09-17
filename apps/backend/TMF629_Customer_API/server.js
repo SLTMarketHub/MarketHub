@@ -36,8 +36,8 @@ mongoose
     })
     .catch((err) => console.error("❌ Mongo Error:", err));
 
-app.use("/tmf-api/customer/v5/customer", customerRoutes);
-app.use("/tmf-api/customer/v5/hub", hubRoutes);
+app.use("/customer", customerRoutes);
+app.use("/hub", hubRoutes);
 
 clientListenerRoutes(app);
 
