@@ -15,7 +15,7 @@ const GoogleSuccess = () => {
 
     const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
     const [loading, setLoading] = useState(false);
-
+    const BASE_URL = import.meta.env.VITE_BASE_URL;
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const needRole = params.get("needRole");
@@ -28,10 +28,10 @@ const GoogleSuccess = () => {
             // Existing user → login success
             const payload = JSON.parse(atob(token.split(".")[1]));
             const user = {
-                _id: payload.id,
+                id: payload.id,
                 email: payload.email,
-                role,
-                username: payload.username || "",
+                role: role.toLowerCase() as "customer" | "partner" | "admin",
+                name: payload.username || "",
             };
 
             localStorage.setItem("token", token);
@@ -60,7 +60,7 @@ const GoogleSuccess = () => {
         if (!googleUser) return;
         try {
             setLoading(true);
-            const res = await axios.post("http://localhost:3050/api/auth/google/complete-signup", {
+            await axios.post(`${BASE_URL}/auth/google/complete-signup`, {
                 email: googleUser.email,
                 name: googleUser.name,
                 role,
@@ -81,13 +81,13 @@ const GoogleSuccess = () => {
                     <h2 className="text-xl font-semibold mb-4">Welcome, {googleUser.name} 👋</h2>
                     <p className="mb-4">Choose your role to complete signup:</p>
                     <div className="flex justify-center gap-4">
-                        <button
+                        {/* <button
                             onClick={() => completeGoogleSignup("Admin")}
                             disabled={loading}
                             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
                         >
                             Admin
-                        </button>
+                        </button> */}
                         <button
                             onClick={() => completeGoogleSignup("Partner")}
                             disabled={loading}
