@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
 const connectDB = require('./Config/db');
 const userRoutes = require('./Route/userRoute');
+const authRoutes = require('./Route/authRoutes')
 const { errorHandler } = require('./Middleware/errorMiddleware');
 const passport = require('passport');
 const cookieParser = require('cookie-parser');
@@ -15,16 +16,16 @@ connectDB();
 
 const app = express();
 
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cors());
 app.use(express.json());
 
-app.use('/tmf-api/auth', require('./Route/authRoutes'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
 
-app.use('/tmf-api/users', userRoutes);
+app.use('/authService', authRoutes);
+app.use('/users', userRoutes);
 
 app.use(errorHandler);
 
