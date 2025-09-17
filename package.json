@@ -1,9 +1,12 @@
 {
   "devDependencies": {
     "nodemon": "^3.1.10"
+<<<<<<< HEAD
   },
   "dependencies": {
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
+=======
+>>>>>>> 277971280b135ebd78622acedd156b1a075853a9
   }
 }

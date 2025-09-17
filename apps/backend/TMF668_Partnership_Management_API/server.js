@@ -49,7 +49,7 @@ const partnershipSpecificationRoutes = require('./routes/partnershipSpecificatio
 const partnershipRoutes = require('./routes/partnership');
 const hubRoutes = require('./routes/hub');
 
-// ✅ Mount routers under correct subpaths
+// Mount routers under correct subpaths
 app.use(`${BASE_PATH}/partnershipSpecification`, partnershipSpecificationRoutes);
 app.use(`${BASE_PATH}/partnership`, partnershipRoutes);
 app.use(`${BASE_PATH}/hub`, hubRoutes);
