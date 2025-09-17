@@ -1,13 +1,88 @@
 // partnership.js
-// Express routes for TMF668 Partnership resource
-
 const express = require('express');
 const router = express.Router();
-const Partnership = require('../models/Partnership');
+const partnershipController = require('../controllers/partnershipController');
 
 /**
  * @swagger
- * /partnership:
+ * tags:
+ *   name: Partnership
+ *   description: Partnership management endpoints
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Partner:
+ *       type: object
+ *       required:
+ *         - engagedParty
+ *         - role
+ *       properties:
+ *         engagedParty:
+ *           type: string
+ *         role:
+ *           type: string
+ *         account:
+ *           type: string
+ *         agreement:
+ *           type: string
+ *         paymentMethod:
+ *           type: string
+ *         contactMedium:
+ *           type: string
+ *         creditProfile:
+ *           type: string
+ *     ValidFor:
+ *       type: object
+ *       required:
+ *         - startDateTime
+ *       properties:
+ *         startDateTime:
+ *           type: string
+ *           format: date-time
+ *         endDateTime:
+ *           type: string
+ *           format: date-time
+ *     Partnership:
+ *       type: object
+ *       required:
+ *         - name
+ *         - specification
+ *         - partner
+ *       properties:
+ *         _id:
+ *           type: string
+ *         name:
+ *           type: string
+ *         description:
+ *           type: string
+ *         specification:
+ *           type: string
+ *         partner:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Partner'
+ *         status:
+ *           type: string
+ *           enum: [active, terminated, pending]
+ *           default: pending
+ *         validFor:
+ *           $ref: '#/components/schemas/ValidFor'
+ *         href:
+ *           type: string
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ */
+
+/**
+ * @swagger
+ * /tmf-api/partnershipManagement/v4/partnership:
  *   post:
  *     summary: Create a new Partnership
  *     tags: [Partnership]
@@ -20,60 +95,30 @@ const Partnership = require('../models/Partnership');
  *     responses:
  *       201:
  *         description: Partnership created successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Partnership'
  *       400:
  *         description: Validation error
+ *       500:
+ *         description: Internal server error
  */
-
-// CREATE: Add a new Partnership
-// POST /partnership
-router.post('/', async (req, res) => {
-  try {
-    // Create a new Partnership from request body
-    const partnership = new Partnership(req.body);
-    const savedPartnership = await partnership.save();
-    res.status(201).json(savedPartnership);
-  } catch (err) {
-    // Handle Mongoose validation errors
-    if (err.name === 'ValidationError') {
-      const errors = Object.values(err.errors).map(e => e.message);
-      return res.status(400).json({ error: 'Validation failed', details: errors });
-    }
-    res.status(400).json({ error: err.message });
-  }
-});
+router.post('/', partnershipController.createPartnership);
 
 /**
  * @swagger
- * /partnership:
+ * /tmf-api/partnershipManagement/v4/partnership:
  *   get:
  *     summary: Get all Partnerships
  *     tags: [Partnership]
  *     responses:
  *       200:
- *         description: List of all Partnerships
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Partnership'
+ *         description: List of partnerships
+ *       500:
+ *         description: Internal server error
  */
-router.get('/', async (req, res) => {
-  try {
-    const partnerships = await Partnership.find();
-    res.json(partnerships);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+router.get('/', partnershipController.getAllPartnerships);
 
 /**
  * @swagger
- * /partnership/{id}:
+ * /tmf-api/partnershipManagement/v4/partnership/{id}:
  *   get:
  *     summary: Get a Partnership by ID
  *     tags: [Partnership]
@@ -86,27 +131,17 @@ router.get('/', async (req, res) => {
  *         description: Partnership ID
  *     responses:
  *       200:
- *         description: Partnership found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Partnership'
+ *         description: Partnership details
  *       404:
  *         description: Partnership not found
+ *       500:
+ *         description: Internal server error
  */
-router.get('/:id', async (req, res) => {
-  try {
-    const partnership = await Partnership.findById(req.params.id);
-    if (!partnership) return res.status(404).json({ error: 'Not found' });
-    res.json(partnership);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+router.get('/:id', partnershipController.getPartnershipById);
 
 /**
  * @swagger
- * /partnership/{id}:
+ * /tmf-api/partnershipManagement/v4/partnership/{id}:
  *   patch:
  *     summary: Update a Partnership by ID
  *     tags: [Partnership]
@@ -125,42 +160,19 @@ router.get('/:id', async (req, res) => {
  *             $ref: '#/components/schemas/Partnership'
  *     responses:
  *       200:
- *         description: Partnership updated
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Partnership'
+ *         description: Partnership updated successfully
  *       400:
  *         description: Validation error
  *       404:
  *         description: Partnership not found
+ *       500:
+ *         description: Internal server error
  */
-
-// UPDATE: Patch a Partnership by ID
-// PATCH /partnership/:id
-router.patch('/:id', async (req, res) => {
-  try {
-    // Only update provided fields
-    const updatedPartnership = await Partnership.findByIdAndUpdate(
-      req.params.id,
-      { $set: req.body },
-      { new: true, runValidators: true }
-    );
-    if (!updatedPartnership) return res.status(404).json({ error: 'Not found' });
-    res.json(updatedPartnership);
-  } catch (err) {
-    // Handle Mongoose validation errors
-    if (err.name === 'ValidationError') {
-      const errors = Object.values(err.errors).map(e => e.message);
-      return res.status(400).json({ error: 'Validation failed', details: errors });
-    }
-    res.status(400).json({ error: err.message });
-  }
-});
+router.patch('/:id', partnershipController.updatePartnership);
 
 /**
  * @swagger
- * /partnership/{id}:
+ * /tmf-api/partnershipManagement/v4/partnership/{id}:
  *   delete:
  *     summary: Delete a Partnership by ID
  *     tags: [Partnership]
@@ -173,71 +185,12 @@ router.patch('/:id', async (req, res) => {
  *         description: Partnership ID
  *     responses:
  *       200:
- *         description: Partnership deleted
+ *         description: Partnership deleted successfully
  *       404:
  *         description: Partnership not found
+ *       500:
+ *         description: Internal server error
  */
-router.delete('/:id', async (req, res) => {
-  try {
-    const deletedPartnership = await Partnership.findByIdAndDelete(req.params.id);
-    if (!deletedPartnership) return res.status(404).json({ error: 'Not found' });
-    res.json({ message: 'Deleted successfully' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+router.delete('/:id', partnershipController.deletePartnership);
 
-
-/**
- * @swagger
- * components:
- *   schemas:
- *     Partner:
- *       type: object
- *       properties:
- *         engagedParty:
- *           type: string
- *         role:
- *           type: string
- *         account:
- *           type: string
- *         agreement:
- *           type: string
- *         paymentMethod:
- *           type: string
- *         contactMedium:
- *           type: string
- *         creditProfile:
- *           type: string
- *     ValidFor:
- *       type: object
- *       properties:
- *         startDateTime:
- *           type: string
- *           format: date-time
- *         endDateTime:
- *           type: string
- *           format: date-time
- *     Partnership:
- *       type: object
- *       properties:
- *         _id:
- *           type: string
- *         name:
- *           type: string
- *         description:
- *           type: string
- *         specification:
- *           type: string
- *         partner:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/Partner'
- *         status:
- *           type: string
- *         validFor:
- *           $ref: '#/components/schemas/ValidFor'
- *         href:
- *           type: string
- */
 module.exports = router;
