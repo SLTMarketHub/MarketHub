@@ -13,6 +13,8 @@ const GoogleCallback: React.FC = () => {
         const role = params.get("role");
         const username = params.get("username");
 
+        console.log("Received params:", { token, role, username }); // Add logging
+
         if (token && role && username) {
             // Decode JWT
             const decoded: any = jwtDecode(token);
