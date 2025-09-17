@@ -5,12 +5,22 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 
 dotenv.config();
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Auth Service
-app.use("/tmf-api/authService/", createProxyMiddleware({
+app.use("/tmf-api/authService", createProxyMiddleware({
   target: process.env.AUTH_URL || "http://localhost:5001",
-  changeOrigin: true
+  changeOrigin: true,
+  cookieDomainRewrite: process.env.FRONTEND_URL,
+  secure: true,
+  pathRewrite: {
+    '^/tmf-api/authService': ''
+  }
 }));
 
 // TMF620 - Product Catalog API
