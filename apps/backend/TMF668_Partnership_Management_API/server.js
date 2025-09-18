@@ -5,8 +5,6 @@ const express = require('express');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const swaggerUi = require('swagger-ui-express');
-const swaggerJsdoc = require('swagger-jsdoc');
 
 // Load environment variables from .env file
 dotenv.config();
@@ -23,36 +21,15 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected'))
   .catch((err) => console.error('❌ MongoDB connection error:', err));
 
-// Base API path (TMF Forum standard)
-const BASE_PATH = '/tmf-api/partnershipManagement/v4';
-
-// Swagger setup
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'TMF668 Partnership Management API',
-      version: '4.0.0',
-      description: 'TMF668 Partnership Management API - TM Forum compliant',
-    },
-    servers: [
-      { url: `http://localhost:${PORT}${BASE_PATH}`, description: 'Development server' }
-    ],
-  },
-  apis: ['./routes/*.js'], // Look for Swagger docs in routes
-};
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
 // Import route files
 const partnershipSpecificationRoutes = require('./routes/partnershipSpecification');
 const partnershipRoutes = require('./routes/partnership');
 const hubRoutes = require('./routes/hub');
 
 // Mount routers under correct subpaths
-app.use(`${BASE_PATH}/partnershipSpecification`, partnershipSpecificationRoutes);
-app.use(`${BASE_PATH}/partnership`, partnershipRoutes);
-app.use(`${BASE_PATH}/hub`, hubRoutes);
+app.use(`/partnershipSpecification`, partnershipSpecificationRoutes);
+app.use(`/partnership`, partnershipRoutes);
+app.use(`/hub`, hubRoutes);
 
 // Health check endpoint (TMF Forum standard)
 app.get('/health', (req, res) => {
@@ -64,15 +41,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Root endpoint
-app.get('/', (req, res) => {
-  res.json({
-    message: 'TMF668 Partnership Management API is running!',
-    documentation: `http://localhost:${PORT}/api-docs`,
-    health: `http://localhost:${PORT}/health`,
-    baseEndpoint: `http://localhost:${PORT}${BASE_PATH}`
-  });
-});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -86,8 +54,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler for undefined routes
-app.use('*', (req, res) => {
+// 404 handler for undefined routes - Express v5 compatible
+app.use((req, res, next) => {
   res.status(404).json({
     error: {
       code: 'NOT_FOUND',
@@ -109,9 +77,6 @@ process.on('SIGINT', () => {
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 TMF668 Partnership Management API started on port ${PORT}`);
-  console.log(`📖 API Documentation: http://localhost:${PORT}/api-docs`);
-  console.log(`🏥 Health Check: http://localhost:${PORT}/health`);
-  console.log(`🔗 Base API Path: http://localhost:${PORT}${BASE_PATH}`);
 });
 
 module.exports = app;
