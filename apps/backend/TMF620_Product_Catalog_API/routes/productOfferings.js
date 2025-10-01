@@ -2,6 +2,31 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult, query } = require('express-validator');
 const productOfferingController = require('../controllers/productOfferingController');
+const multer = require('multer');
+const path = require('path');
+
+// Multer storage config
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '..', 'uploads'));
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: function (req, file, cb) {
+    if (!/^image\//.test(file.mimetype)) {
+      return cb(new Error('Only image uploads are allowed'));
+    }
+    cb(null, true);
+  }
+});
 
 // Validation middleware
 const validateProductOffering = [
@@ -32,5 +57,8 @@ router.get('/:id', productOfferingController.getProductOffering);
 router.post('/', validateProductOffering, handleValidationErrors, productOfferingController.createProductOffering);
 router.patch('/:id', productOfferingController.updateProductOffering);
 router.delete('/:id', productOfferingController.deleteProductOffering);
+
+// Image upload for a product offering
+router.post('/:id/attachments', upload.single('image'), productOfferingController.uploadProductOfferingImage);
 
 module.exports = router;

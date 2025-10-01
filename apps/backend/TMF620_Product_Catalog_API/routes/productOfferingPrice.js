@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const { body, validationResult, query } = require('express-validator');
-const productController = require('../controllers/productOfferingPriceController');
+const productOfferingPriceController = require('../controllers/productOfferingPriceController');
 
 // Validation middleware
-const validateProduct = [
-  body('id').notEmpty().withMessage('Product ID is required'),
-  body('name').notEmpty().withMessage('Product name is required'),
+const validateProductOfferingPrice = [
+  body('id').notEmpty().withMessage('ProductOfferingPrice ID is required'),
+  body('name').notEmpty().withMessage('ProductOfferingPrice name is required'),
+  body('priceType').notEmpty().isIn(['oneTime', 'recurring', 'usage']).withMessage('priceType must be oneTime|recurring|usage'),
   body('lifecycleStatus').optional().isIn(['InStudy', 'InDesign', 'InTest', 'Active', 'Launched', 'Retired', 'Obsolete'])
 ];
 
@@ -27,10 +28,10 @@ const handleValidationErrors = (req, res, next) => {
 };
 
 // Routes
-router.get('/', validateQueryParams, handleValidationErrors, productController.listProducts);
-router.get('/:id', productController.getProduct);
-router.post('/', validateProduct, handleValidationErrors, productController.createProduct);
-router.patch('/:id', productController.updateProduct);
-router.delete('/:id', productController.deleteProduct);
+router.get('/', validateQueryParams, handleValidationErrors, productOfferingPriceController.listProductOfferingPrices);
+router.get('/:id', productOfferingPriceController.getProductOfferingPrice);
+router.post('/', validateProductOfferingPrice, handleValidationErrors, productOfferingPriceController.createProductOfferingPrice);
+router.patch('/:id', productOfferingPriceController.updateProductOfferingPrice);
+router.delete('/:id', productOfferingPriceController.deleteProductOfferingPrice);
 
 module.exports = router;

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
-const ProductSchema = new mongoose.Schema({
+// TMF620 ProductOfferingPrice schema
+const ProductOfferingPriceSchema = new mongoose.Schema({
   id: {
     type: String,
     unique: true,
@@ -15,10 +16,6 @@ const ProductSchema = new mongoose.Schema({
     trim: true
   },
   description: {
-    type: String,
-    trim: true
-  },
-  brand: {
     type: String,
     trim: true
   },
@@ -40,170 +37,75 @@ const ProductSchema = new mongoose.Schema({
       type: Date
     }
   },
-  productNumber: {
+  // TMF620 core fields for ProductOfferingPrice
+  priceType: {
     type: String,
-    unique: true
+    enum: ['oneTime', 'recurring', 'usage'],
+    required: true
   },
-  isBundle: {
-    type: Boolean,
-    default: false
+  recurringChargePeriod: {
+    type: String // e.g. 'hour', 'day', 'month', 'year'
   },
-  isCustomerVisible: {
-    type: Boolean,
-    default: true
+  recurringChargePeriodLength: {
+    type: Number // e.g. 1 for monthly, 12 for yearly (months)
   },
-  productSpecification: {
-    id: String,
-    href: String,
-    name: String,
-    version: String,
-    '@type': String,
-    '@schemaLocation': String,
-    '@referredType': String
+  unitOfMeasure: {
+    amount: Number,
+    units: String // e.g. 'GB', 'minute', 'message'
   },
-  attachment: [{
-    id: String,
-    href: String,
-    attachmentType: String,
-    content: String,
+  price: {
+    taxIncludedAmount: {
+      value: { type: Number },
+      unit: { type: String } // currency code like 'USD'
+    },
+    dutyFreeAmount: {
+      value: { type: Number },
+      unit: { type: String }
+    },
+    taxRate: { type: Number }
+  },
+  validForPrice: {
+    startDateTime: Date,
+    endDateTime: Date
+  },
+  priceAlteration: [{
+    applicationOrder: Number,
     description: String,
-    mimeType: String,
     name: String,
-    url: String,
-    size: {
+    priceType: { type: String, enum: ['oneTime', 'recurring', 'usage'] },
+    recurringChargePeriod: String,
+    unitOfMeasure: {
       amount: Number,
       units: String
     },
-    validFor: {
-      startDateTime: Date,
-      endDateTime: Date
-    },
-    '@type': String,
-    '@schemaLocation': String
-  }],
-  bundledProductOffering: [{
-    id: String,
-    href: String,
-    lifecycleStatus: String,
-    name: String,
-    '@type': String,
-    '@schemaLocation': String,
-    '@referredType': String
-  }],
-  category: [{
-    id: String,
-    href: String,
-    name: String,
-    version: String,
-    '@type': String,
-    '@schemaLocation': String,
-    '@referredType': String
-  }],
-  place: [{
-    id: String,
-    href: String,
-    name: String,
-    '@type': String,
-    '@schemaLocation': String,
-    '@referredType': String
-  }],
-  productOfferingPrice: [{
-    id: String,
-    href: String,
-    name: String,
-    '@type': String,
-    '@schemaLocation': String,
-    '@referredType': String
-  }],
-  productOfferingTerm: [{
-    description: String,
-    name: String,
-    duration: {
-      amount: Number,
-      units: String
-    },
-    validFor: {
-      startDateTime: Date,
-      endDateTime: Date
-    },
-    '@type': String,
-    '@schemaLocation': String
-  }],
-  productSpecCharacteristic: [{
-    id: String,
-    configurable: Boolean,
-    description: String,
-    extensible: Boolean,
-    isUnique: Boolean,
-    maxCardinality: Number,
-    minCardinality: Number,
-    name: String,
-    regex: String,
-    valueType: String,
-    productSpecCharacteristicValue: [{
-      isDefault: Boolean,
-      rangeInterval: String,
-      regex: String,
-      unitOfMeasure: String,
-      valueFrom: Number,
-      valueTo: Number,
-      valueType: String,
-      validFor: {
-        startDateTime: Date,
-        endDateTime: Date
+    price: {
+      taxIncludedAmount: {
+        value: { type: Number },
+        unit: { type: String }
       },
-      value: mongoose.Schema.Types.Mixed,
-      '@type': String,
-      '@schemaLocation': String
-    }],
+      dutyFreeAmount: {
+        value: { type: Number },
+        unit: { type: String }
+      },
+      taxRate: { type: Number }
+    },
+    validFor: {
+      startDateTime: Date,
+      endDateTime: Date
+    },
     '@type': String,
     '@schemaLocation': String
   }],
-  relatedParty: [{
-    id: String,
-    href: String,
-    name: String,
-    role: String,
-    '@type': String,
-    '@schemaLocation': String,
-    '@referredType': String
-  }],
-  resourceCandidate: [{
-    id: String,
-    href: String,
-    name: String,
-    version: String,
-    '@type': String,
-    '@schemaLocation': String,
-    '@referredType': String
-  }],
-  serviceCandidate: [{
-    id: String,
-    href: String,
-    name: String,
-    version: String,
-    '@type': String,
-    '@schemaLocation': String,
-    '@referredType': String
-  }],
-  serviceLevelAgreement: {
-    id: String,
-    href: String,
-    name: String,
-    '@type': String,
-    '@schemaLocation': String,
-    '@referredType': String
-  },
   '@baseType': {
     type: String,
-    default: 'Product'
+    default: 'ProductOfferingPrice'
   },
   '@schemaLocation': {
     type: String
   },
   '@type': {
     type: String,
-    default: 'Product'
+    default: 'ProductOfferingPrice'
   }
 }, {
   timestamps: true,
@@ -211,10 +113,8 @@ const ProductSchema = new mongoose.Schema({
 });
 
 // Indexes for better performance
-ProductSchema.index({ id: 1 });
-ProductSchema.index({ name: 1 });
-ProductSchema.index({ lifecycleStatus: 1 });
-ProductSchema.index({ 'category.id': 1 });
-ProductSchema.index({ productNumber: 1 });
+ProductOfferingPriceSchema.index({ id: 1 });
+ProductOfferingPriceSchema.index({ name: 1 });
+ProductOfferingPriceSchema.index({ lifecycleStatus: 1 });
 
-module.exports = mongoose.model('Product', ProductSchema);
+module.exports = mongoose.model('ProductOfferingPrice', ProductOfferingPriceSchema);
