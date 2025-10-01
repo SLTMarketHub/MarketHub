@@ -1,5 +1,6 @@
 const ProductOffering = require('../models/ProductOffering');
 const { publishEvent } = require('../services/eventPublisher');
+const path = require('path');
 
 // GET /tmf-api/productCatalog/v5/productOffering - List product offerings with filtering and pagination
 const listProductOfferings = async (req, res) => {
@@ -145,5 +146,47 @@ module.exports = {
   getProductOffering,
   createProductOffering,
   updateProductOffering,
-  deleteProductOffering
+  deleteProductOffering,
+  // POST /tmf-api/productCatalog/v5/productOffering/:id/attachments
+  uploadProductOfferingImage: async (req, res) => {
+    try {
+      const productOffering = await ProductOffering.findOne({ id: req.params.id });
+      if (!productOffering) {
+        return res.status(404).json({ error: 'Product Offering not found' });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const file = req.file;
+      const publicUrl = `/uploads/${path.basename(file.path)}`;
+
+      const attachment = {
+        id: `${productOffering.id}-att-${Date.now()}`,
+        href: publicUrl,
+        attachmentType: 'image',
+        content: undefined,
+        description: file.originalname,
+        mimeType: file.mimetype,
+        name: file.originalname,
+        url: publicUrl,
+        size: {
+          amount: file.size,
+          units: 'bytes'
+        },
+        '@type': 'Attachment',
+        '@schemaLocation': ''
+      };
+
+      productOffering.attachment = productOffering.attachment || [];
+      productOffering.attachment.push(attachment);
+      await productOffering.save();
+
+      publishEvent('ProductOfferingAttributeValueChangeEvent', 'ProductOffering', productOffering.toObject());
+      res.status(201).json({ message: 'Image uploaded', attachment });
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error', message: error.message });
+    }
+  }
 };

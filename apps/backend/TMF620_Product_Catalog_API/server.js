@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -34,6 +35,10 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Static serving for uploaded files
+const uploadsDir = path.join(__dirname, 'uploads');
+app.use('/uploads', express.static(uploadsDir));
+
 // Logging middleware
 app.use(morgan('combined'));
 
@@ -57,7 +62,6 @@ app.use('/hub', require('./routes/hubRoutes'));
 
 
 // Serve docs PDF under /api/v1/docs
-const path = require('path');
 const docsPdfPath = path.join(__dirname, '..', '..', '..', 'docs', 'API docs', 'TMF620_Product_Catalog_userguide.pdf');
 app.get('/tmf-api/productCatalog/v5/docs', (req, res) => {
   res.sendFile(docsPdfPath, err => {
