@@ -40,12 +40,27 @@ const ProductOfferingPriceSchema = new mongoose.Schema({
   // TMF620 core fields for ProductOfferingPrice
   priceType: {
     type: String,
-    enum: ['oneTime', 'recurring', 'usage'],
+    enum: ['oneTime', 'recurring', 'usage', 'discount'],
     required: true
   },
   recurringChargePeriod: {
     type: String // e.g. 'hour', 'day', 'month', 'year'
   },
+  // Relationship to other ProductOfferingPrice entities (e.g., discountedBy)
+  popRelationship: [{
+    id: String,
+    href: String,
+    name: String,
+    relationshipType: String, // e.g., 'discountedBy'
+    role: String,
+    validFor: {
+      startDateTime: Date,
+      endDateTime: Date
+    },
+    '@type': String,
+    '@schemaLocation': String,
+    '@referredType': String
+  }],
   recurringChargePeriodLength: {
     type: Number // e.g. 1 for monthly, 12 for yearly (months)
   },
