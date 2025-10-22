@@ -6,6 +6,7 @@ const Product = require('../models/Product');
 const Category = require('../models/Category');
 const ProductSpecification = require('../models/ProductSpecification');
 const ProductOffering = require('../models/ProductOffering');
+const ProductOfferingPrice = require('../models/ProductOfferingPrice');
 const ProductCatalog = require('../models/ProductCatalog');
 
 async function main() {
@@ -17,6 +18,7 @@ async function main() {
     Category.deleteMany({}),
     ProductSpecification.deleteMany({}),
     ProductOffering.deleteMany({}),
+    ProductOfferingPrice.deleteMany({}),
     ProductCatalog.deleteMany({})
   ]);
 
@@ -35,11 +37,63 @@ async function main() {
   const offeringMobile = await ProductOffering.create({ id: 'OFF-MOB-10GB', name: 'Mobile 10GB Plan', isSellable: true, category: [{ id: mobileCat.id, href: mobileCat.href, name: mobileCat.name }], productSpecification: { id: specMobile.id, name: specMobile.name } });
   const offeringBB = await ProductOffering.create({ id: 'OFF-BB-100', name: 'Broadband 100Mbps', isSellable: true, category: [{ id: broadbandCat.id, href: broadbandCat.href, name: broadbandCat.name }], productSpecification: { id: specBB.id, name: specBB.name } });
 
+  // Create ProductOfferingPrice: base price and discount price, then link via popRelationship (discountedBy)
+  const popBase = await ProductOfferingPrice.create({
+    id: 'POP-MOB-10GB-BASE',
+    name: 'Base Monthly Price',
+    priceType: 'recurring',
+    recurringChargePeriod: 'month',
+    price: {
+      taxIncludedAmount: { value: 25, unit: 'USD' },
+      dutyFreeAmount: { value: 25, unit: 'USD' },
+      taxRate: 0
+    },
+    lifecycleStatus: 'Active',
+    validFor: { startDateTime: new Date() }
+  });
+
+  const popDiscount = await ProductOfferingPrice.create({
+    id: 'POP-MOB-10GB-DISC10',
+    name: 'Promo 10% Off 3 months',
+    priceType: 'discount',
+    priceAlteration: [{
+      applicationOrder: 1,
+      name: 'Percentage Discount',
+      price: { dutyFreeAmount: { value: -2.5, unit: 'USD' }, taxIncludedAmount: { value: -2.5, unit: 'USD' } },
+      validFor: { startDateTime: new Date(), endDateTime: new Date(Date.now() + 90*24*3600*1000) }
+    }],
+    lifecycleStatus: 'Active',
+    validFor: { startDateTime: new Date(), endDateTime: new Date(Date.now() + 90*24*3600*1000) }
+  });
+
+  // Link: base price discountedBy discount price
+  await ProductOfferingPrice.updateOne({ id: popBase.id }, {
+    $set: {
+      popRelationship: [{
+        id: popDiscount.id,
+        href: `/tmf-api/productCatalog/v5/productOfferingPrice/${popDiscount.id}`,
+        name: popDiscount.name,
+        relationshipType: 'discountedBy',
+        '@referredType': 'ProductOfferingPrice'
+      }]
+    }
+  });
+
+  // Attach pricing refs to the mobile offering
+  await ProductOffering.updateOne({ id: offeringMobile.id }, {
+    $set: {
+      productOfferingPrice: [
+        { id: popBase.id, href: `/tmf-api/productCatalog/v5/productOfferingPrice/${popBase.id}`, name: popBase.name, '@referredType': 'ProductOfferingPrice' },
+        { id: popDiscount.id, href: `/tmf-api/productCatalog/v5/productOfferingPrice/${popDiscount.id}`, name: popDiscount.name, '@referredType': 'ProductOfferingPrice' }
+      ]
+    }
+  });
+
   await Product.create({ id: 'PROD-SIM', name: 'SIM Card', brand: 'MarketHub', category: [{ id: mobileCat.id, href: mobileCat.href, name: mobileCat.name }], productSpecification: { id: specMobile.id, name: specMobile.name } });
   await Product.create({ id: 'PROD-ROUTER', name: 'WiFi Router', brand: 'MarketHub', category: [{ id: broadbandCat.id, href: broadbandCat.href, name: broadbandCat.name }], productSpecification: { id: specBB.id, name: specBB.name } });
 
   console.log('Seed completed:');
-  console.log({ catalog: catalog.id, categories: [mobileCat.id, broadbandCat.id], specs: [specMobile.id, specBB.id], offerings: [offeringMobile.id, offeringBB.id] });
+  console.log({ catalog: catalog.id, categories: [mobileCat.id, broadbandCat.id], specs: [specMobile.id, specBB.id], offerings: [offeringMobile.id, offeringBB.id], prices: [popBase.id, popDiscount.id] });
   await mongoose.disconnect();
 }
 

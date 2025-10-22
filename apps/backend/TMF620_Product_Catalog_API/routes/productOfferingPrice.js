@@ -7,7 +7,7 @@ const productOfferingPriceController = require('../controllers/productOfferingPr
 const validateProductOfferingPrice = [
   body('id').notEmpty().withMessage('ProductOfferingPrice ID is required'),
   body('name').notEmpty().withMessage('ProductOfferingPrice name is required'),
-  body('priceType').notEmpty().isIn(['oneTime', 'recurring', 'usage']).withMessage('priceType must be oneTime|recurring|usage'),
+  body('priceType').notEmpty().isIn(['oneTime', 'recurring', 'usage', 'discount']).withMessage('priceType must be oneTime|recurring|usage|discount'),
   body('lifecycleStatus').optional().isIn(['InStudy', 'InDesign', 'InTest', 'Active', 'Launched', 'Retired', 'Obsolete'])
 ];
 

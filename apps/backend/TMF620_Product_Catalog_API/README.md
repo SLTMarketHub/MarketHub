@@ -203,6 +203,67 @@ Key fields include:
 - `isCustomerVisible` - Visibility flag
 
 ### Category Schema
+### Promotions and Discounts (ProductOfferingPrice)
+
+This implementation supports modeling promotions using `ProductOfferingPrice` with:
+
+- **priceType**: includes `discount` alongside `oneTime`, `recurring`, `usage`.
+- **popRelationship**: an array of `ProductOfferingPriceRelationship` items to express links like `relationshipType: "discountedBy"` where a base price is discounted by a promotional pricing element.
+- Optional `priceAlteration` on a discount price to capture the monetary effect for a given validity window.
+
+Example: Base monthly price discounted by a promotion price
+
+```json
+{
+  "id": "POP-MOB-10GB-BASE",
+  "name": "Base Monthly Price",
+  "priceType": "recurring",
+  "recurringChargePeriod": "month",
+  "price": { "taxIncludedAmount": { "value": 25, "unit": "USD" } },
+  "popRelationship": [
+    {
+      "id": "POP-MOB-10GB-DISC10",
+      "href": "/tmf-api/productCatalog/v5/productOfferingPrice/POP-MOB-10GB-DISC10",
+      "name": "Promo 10% Off 3 months",
+      "relationshipType": "discountedBy",
+      "@referredType": "ProductOfferingPrice"
+    }
+  ]
+}
+```
+
+The discount pricing element:
+
+```json
+{
+  "id": "POP-MOB-10GB-DISC10",
+  "name": "Promo 10% Off 3 months",
+  "priceType": "discount",
+  "priceAlteration": [
+    {
+      "applicationOrder": 1,
+      "name": "Percentage Discount",
+      "price": {
+        "dutyFreeAmount": { "value": -2.5, "unit": "USD" },
+        "taxIncludedAmount": { "value": -2.5, "unit": "USD" }
+      },
+      "validFor": { "startDateTime": "2025-01-01T00:00:00Z", "endDateTime": "2025-03-31T23:59:59Z" }
+    }
+  ],
+  "validFor": { "startDateTime": "2025-01-01T00:00:00Z", "endDateTime": "2025-03-31T23:59:59Z" }
+}
+```
+
+Attach both pricing references to a `ProductOffering` in `productOfferingPrice` array to indicate the offering uses the base price and is discounted by the promotion.
+
+Endpoints for pricing:
+
+- `GET /productOfferingPrice` – list and filter pricing elements
+- `GET /productOfferingPrice/:id` – retrieve a specific pricing element
+- `POST /productOfferingPrice` – create a pricing element (supports `discount`)
+- `PATCH /productOfferingPrice/:id` – update a pricing element
+- `DELETE /productOfferingPrice/:id` – delete a pricing element
+
 Key fields include:
 - `id` - Unique identifier
 - `name` - Category name
