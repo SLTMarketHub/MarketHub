@@ -160,23 +160,21 @@ module.exports = {
       }
 
       const file = req.file;
-      const publicUrl = `/uploads/${path.basename(file.path)}`;
+      
 
       const attachment = {
         id: `${productOffering.id}-att-${Date.now()}`,
-        href: publicUrl,
         attachmentType: 'image',
-        content: undefined,
         description: file.originalname,
         mimeType: file.mimetype,
         name: file.originalname,
-        url: publicUrl,
+        data: file.buffer, // Store binary data directly in MongoDB
         size: {
           amount: file.size,
           units: 'bytes'
         },
         '@type': 'Attachment',
-        '@schemaLocation': ''
+        
       };
 
       productOffering.attachment = productOffering.attachment || [];
@@ -188,5 +186,30 @@ module.exports = {
     } catch (error) {
       res.status(500).json({ error: 'Internal server error', message: error.message });
     }
+  },
+
+  // GET attachment (stream image)
+  getProductOfferingAttachment: async (req, res) => {
+    try {
+      const { id, attId } = req.params;
+      const productOffering = await ProductOffering.findOne({ id: id });
+      if (!productOffering) {
+        return res.status(404).json({ message: 'Product offering not found' });
+      }
+
+      const attachment = (productOffering.attachment || []).find(a => a.id === attId);
+      if (!attachment || !attachment.data) {
+        return res.status(404).json({ message: 'Attachment not found' });
+      }
+
+      // Set correct headers and send the image binary
+      res.set('Content-Type', attachment.mimeType || attachment.contentType || 'application/octet-stream');
+      res.set('Content-Disposition', `inline; filename="${attachment.name || 'image'}"`);
+      res.send(attachment.data);
+    } catch (error) {
+      console.error('Error retrieving attachment:', error);
+      res.status(500).json({ message: 'Error retrieving attachment', error: error.message });
+    }
   }
 };
+
