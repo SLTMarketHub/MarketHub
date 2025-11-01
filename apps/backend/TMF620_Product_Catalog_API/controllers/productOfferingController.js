@@ -2,6 +2,20 @@ const ProductOffering = require('../models/ProductOffering');
 const { publishEvent } = require('../services/eventPublisher');
 const path = require('path');
 
+// Helper function to remove binary data from attachments (keep only metadata)
+const sanitizeAttachments = (offeringObj) => {
+  if (offeringObj.attachment && Array.isArray(offeringObj.attachment)) {
+    offeringObj.attachment = offeringObj.attachment.map(att => {
+      const { data, ...attachmentMetadata } = att;
+      return {
+        ...attachmentMetadata,
+        href: `/tmf-api/productCatalog/v5/productOffering/${offeringObj.id}/attachments/${att.id}`
+      };
+    });
+  }
+  return offeringObj;
+};
+
 // GET /tmf-api/productCatalog/v5/productOffering - List product offerings with filtering and pagination
 const listProductOfferings = async (req, res) => {
   try {
@@ -45,8 +59,14 @@ const listProductOfferings = async (req, res) => {
 
     const total = await ProductOffering.countDocuments(filter);
 
+    // Remove binary data from attachments in response (keep only metadata)
+    const sanitizedOfferings = productOfferings.map(offering => {
+      const offeringObj = offering.toObject();
+      return sanitizeAttachments(offeringObj);
+    });
+
     res.json({
-      data: productOfferings,
+      data: sanitizedOfferings,
       pagination: {
         offset: parseInt(offset),
         limit: parseInt(limit),
@@ -78,7 +98,9 @@ const getProductOffering = async (req, res) => {
       return res.status(404).json({ error: 'Product Offering not found' });
     }
 
-    res.json(productOffering);
+    // Remove binary data from attachments in response (keep only metadata)
+    const offeringObj = sanitizeAttachments(productOffering.toObject());
+    res.json(offeringObj);
   } catch (error) {
     res.status(500).json({ error: 'Internal server error', message: error.message });
   }
@@ -95,7 +117,9 @@ const createProductOffering = async (req, res) => {
     const productOffering = new ProductOffering(req.body);
     await productOffering.save();
 
-    res.status(201).json(productOffering);
+    // Remove binary data from attachments in response (keep only metadata)
+    const offeringObj = sanitizeAttachments(productOffering.toObject());
+    res.status(201).json(offeringObj);
     publishEvent('ProductOfferingCreateEvent', 'ProductOffering', productOffering.toObject());
   } catch (error) {
     if (error.code === 11000) {
@@ -118,7 +142,9 @@ const updateProductOffering = async (req, res) => {
       return res.status(404).json({ error: 'Product Offering not found' });
     }
 
-    res.json(productOffering);
+    // Remove binary data from attachments in response (keep only metadata)
+    const offeringObj = sanitizeAttachments(productOffering.toObject());
+    res.json(offeringObj);
     if (productOffering) publishEvent('ProductOfferingAttributeValueChangeEvent', 'ProductOffering', productOffering.toObject());
   } catch (error) {
     res.status(500).json({ error: 'Internal server error', message: error.message });
@@ -161,6 +187,17 @@ module.exports = {
 
       const file = req.file;
       
+      // Validate file buffer exists and has data
+      if (!file.buffer || !Buffer.isBuffer(file.buffer)) {
+        return res.status(400).json({ error: 'Invalid file data' });
+      }
+
+      if (file.buffer.length === 0) {
+        return res.status(400).json({ error: 'File is empty' });
+      }
+
+      // Ensure buffer is properly formatted
+      const imageBuffer = Buffer.isBuffer(file.buffer) ? file.buffer : Buffer.from(file.buffer);
 
       const attachment = {
         id: `${productOffering.id}-att-${Date.now()}`,
@@ -168,21 +205,44 @@ module.exports = {
         description: file.originalname,
         mimeType: file.mimetype,
         name: file.originalname,
-        data: file.buffer, // Store binary data directly in MongoDB
+        data: imageBuffer, // Store binary data directly in MongoDB as Buffer
         size: {
-          amount: file.size,
+          amount: imageBuffer.length, // Use actual buffer length
           units: 'bytes'
         },
-        '@type': 'Attachment',
-        
+        '@type': 'Attachment'
       };
 
       productOffering.attachment = productOffering.attachment || [];
       productOffering.attachment.push(attachment);
       await productOffering.save();
 
+      // Verify data was saved correctly (optional - for debugging)
+      const savedOffering = await ProductOffering.findOne({ id: req.params.id });
+      const savedAttachment = savedOffering.attachment.find(a => a.id === attachment.id);
+      if (savedAttachment && savedAttachment.data) {
+        const dataLength = Buffer.isBuffer(savedAttachment.data) 
+          ? savedAttachment.data.length 
+          : (savedAttachment.data.buffer ? savedAttachment.data.buffer.length : 0);
+        if (dataLength === 0) {
+          console.warn('Warning: Image data may not have been saved correctly to database');
+        }
+      }
+
+      // Return attachment metadata only (exclude binary data)
+      const attachmentMetadata = {
+        id: attachment.id,
+        attachmentType: attachment.attachmentType,
+        description: attachment.description,
+        mimeType: attachment.mimeType,
+        name: attachment.name,
+        size: attachment.size,
+        '@type': attachment['@type'],
+        href: `/tmf-api/productCatalog/v5/productOffering/${productOffering.id}/attachments/${attachment.id}`
+      };
+
       publishEvent('ProductOfferingAttributeValueChangeEvent', 'ProductOffering', productOffering.toObject());
-      res.status(201).json({ message: 'Image uploaded', attachment });
+      res.status(201).json({ message: 'Image uploaded', attachment: attachmentMetadata });
     } catch (error) {
       res.status(500).json({ error: 'Internal server error', message: error.message });
     }
@@ -202,10 +262,36 @@ module.exports = {
         return res.status(404).json({ message: 'Attachment not found' });
       }
 
+      // Convert data to Buffer - handle all MongoDB/Mongoose return types
+      let imageBuffer;
+      if (Buffer.isBuffer(attachment.data)) {
+        // Already a Buffer - use directly
+        imageBuffer = attachment.data;
+      } else if (attachment.data && typeof attachment.data === 'object' && attachment.data.buffer) {
+        // MongoDB Binary object - extract buffer
+        imageBuffer = Buffer.from(attachment.data.buffer);
+      } else if (attachment.data && typeof attachment.data === 'string') {
+        // Base64 string - decode it
+        imageBuffer = Buffer.from(attachment.data, 'base64');
+      } else if (attachment.data instanceof Uint8Array) {
+        // Uint8Array - convert to Buffer
+        imageBuffer = Buffer.from(attachment.data);
+      } else {
+        // Try to convert to Buffer
+        imageBuffer = Buffer.from(attachment.data);
+      }
+
+      // Validate buffer has data
+      if (!imageBuffer || imageBuffer.length === 0) {
+        return res.status(404).json({ message: 'Attachment data is empty or invalid' });
+      }
+
       // Set correct headers and send the image binary
       res.set('Content-Type', attachment.mimeType || attachment.contentType || 'application/octet-stream');
       res.set('Content-Disposition', `inline; filename="${attachment.name || 'image'}"`);
-      res.send(attachment.data);
+      res.set('Content-Length', imageBuffer.length);
+      res.set('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+      res.send(imageBuffer);
     } catch (error) {
       console.error('Error retrieving attachment:', error);
       res.status(500).json({ message: 'Error retrieving attachment', error: error.message });
