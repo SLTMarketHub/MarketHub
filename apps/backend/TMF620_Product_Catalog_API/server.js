@@ -13,15 +13,7 @@ require('dotenv').config();
 const app = express();
 
 // ✅ Enable CORS for local frontend (React) and any allowed domains
-app.use(cors({
-  origin: [
-    'http://localhost:5173',          // local React app
-    //'https://your-frontend-domain.com' // optional: production frontend
-  ],
-  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
+app.use(cors());
 
 
 // Security middleware
