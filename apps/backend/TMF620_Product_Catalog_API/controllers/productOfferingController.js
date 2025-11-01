@@ -248,54 +248,40 @@ module.exports = {
     }
   },
 
-  // GET attachment (stream image)
-  getProductOfferingAttachment: async (req, res) => {
-    try {
-      const { id, attId } = req.params;
-      const productOffering = await ProductOffering.findOne({ id: id });
-      if (!productOffering) {
-        return res.status(404).json({ message: 'Product offering not found' });
-      }
-
-      const attachment = (productOffering.attachment || []).find(a => a.id === attId);
-      if (!attachment || !attachment.data) {
-        return res.status(404).json({ message: 'Attachment not found' });
-      }
-
-      // Convert data to Buffer - handle all MongoDB/Mongoose return types
-      let imageBuffer;
-      if (Buffer.isBuffer(attachment.data)) {
-        // Already a Buffer - use directly
-        imageBuffer = attachment.data;
-      } else if (attachment.data && typeof attachment.data === 'object' && attachment.data.buffer) {
-        // MongoDB Binary object - extract buffer
-        imageBuffer = Buffer.from(attachment.data.buffer);
-      } else if (attachment.data && typeof attachment.data === 'string') {
-        // Base64 string - decode it
-        imageBuffer = Buffer.from(attachment.data, 'base64');
-      } else if (attachment.data instanceof Uint8Array) {
-        // Uint8Array - convert to Buffer
-        imageBuffer = Buffer.from(attachment.data);
-      } else {
-        // Try to convert to Buffer
-        imageBuffer = Buffer.from(attachment.data);
-      }
-
-      // Validate buffer has data
-      if (!imageBuffer || imageBuffer.length === 0) {
-        return res.status(404).json({ message: 'Attachment data is empty or invalid' });
-      }
-
-      // Set correct headers and send the image binary
-      res.set('Content-Type', attachment.mimeType || attachment.contentType || 'application/octet-stream');
-      res.set('Content-Disposition', `inline; filename="${attachment.name || 'image'}"`);
-      res.set('Content-Length', imageBuffer.length);
-      res.set('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
-      res.send(imageBuffer);
-    } catch (error) {
-      console.error('Error retrieving attachment:', error);
-      res.status(500).json({ message: 'Error retrieving attachment', error: error.message });
+// GET /tmf-api/productCatalog/v5/productOffering/:id/attachments/:attId
+getProductOfferingAttachment: async (req, res) => {
+  try {
+    const { id, attId } = req.params;
+    const productOffering = await ProductOffering.findOne({ id });
+    if (!productOffering) {
+      return res.status(404).json({ message: "Product offering not found" });
     }
+
+    const attachment = (productOffering.attachment || []).find(a => a.id === attId);
+    if (!attachment || !attachment.data) {
+      return res.status(404).json({ message: "Attachment not found" });
+    }
+
+    // ✅ Ensure data is in Buffer format
+    let imageBuffer;
+    if (Buffer.isBuffer(attachment.data)) {
+      imageBuffer = attachment.data;
+    } else if (attachment.data && attachment.data.buffer) {
+      imageBuffer = Buffer.from(attachment.data.buffer);
+    } else if (typeof attachment.data === "string") {
+      imageBuffer = Buffer.from(attachment.data, "base64");
+    } else {
+      imageBuffer = Buffer.from(attachment.data);
+    }
+
+    res.set("Content-Type", attachment.mimeType || "image/png");
+    res.set("Content-Disposition", `inline; filename="${attachment.name || "image"}"`);
+    res.send(imageBuffer);
+  } catch (error) {
+    console.error("Error retrieving attachment:", error);
+    res.status(500).json({ message: "Error retrieving attachment", error: error.message });
   }
+},
+
 };
 
