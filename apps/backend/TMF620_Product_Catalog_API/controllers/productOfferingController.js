@@ -274,8 +274,17 @@ getProductOfferingAttachment: async (req, res) => {
       imageBuffer = Buffer.from(attachment.data);
     }
 
+    // Set CORS headers to allow image retrieval from any origin
+    res.set("Access-Control-Allow-Origin", "*"); // Allow all origins for images
+    res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
+    
+    // Set image-specific headers
     res.set("Content-Type", attachment.mimeType || "image/png");
     res.set("Content-Disposition", `inline; filename="${attachment.name || "image"}"`);
+    res.set("Content-Length", imageBuffer.length);
+    res.set("Cache-Control", "public, max-age=31536000"); // Cache for 1 year
+    
     res.send(imageBuffer);
   } catch (error) {
     console.error("Error retrieving attachment:", error);
