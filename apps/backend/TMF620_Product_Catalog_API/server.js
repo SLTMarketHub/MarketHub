@@ -12,12 +12,40 @@ require('dotenv').config();
 
 const app = express();
 
-// ✅ Enable CORS for local frontend (React) and any allowed domains
-app.use(cors());
+// CORS configuration - Configure CORS first to allow cross-origin requests
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, curl)
+    if (!origin) return callback(null, true);
+    
+    // Get allowed origins from environment variable or use defaults
+    // Default origins are common local development ports:
+    // - http://localhost:3000 = Create React App default port
+    // - http://localhost:5173 = Vite default port (your frontend uses Vite)
+    const allowedOrigins = process.env.CORS_ORIGIN 
+      ? process.env.CORS_ORIGIN.split(',')
+      : ['http://localhost:3000', 'http://localhost:5173'];
+    
+    // Allow all origins for development, or check against allowed list
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    
+    // Reject origin if not in allowed list (production mode)
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 
-
-// Security middleware
-app.use(helmet());
+// Security middleware (configure helmet to allow images from cross-origin)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow images to be loaded cross-origin
+  crossOriginEmbedderPolicy: false // Disable for image serving
+}));
 app.use(compression());
 
 // Rate limiting
@@ -27,15 +55,6 @@ const limiter = rateLimit({
   message: 'Too many requests from this IP, please try again later.'
 });
 app.use('/tmf-api/', limiter);
-
-// CORS configuration
-//app.use(cors());
-const corsOptions = {
-  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:3000'],
-  credentials: true,
-  optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
