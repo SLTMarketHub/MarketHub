@@ -1,4 +1,3 @@
-const axios = require('axios');
 const EventHub = require('../Models/EventHub');
 
 const buildEvent = (type, customer) => ({
@@ -12,22 +11,13 @@ const buildEvent = (type, customer) => ({
 });
 
 exports.publishEvent = async (type, customer) => {
-    const hubs = await EventHub.find();
-    if (hubs.length === 0) {
-        console.log('ℹ️ No listeners to notify.');
-        return;
-    }
+    try {
+        const eventPayload = buildEvent(type, customer);
 
-    const eventPayload = buildEvent(type, customer);
+        await EventHub.create(eventPayload);
 
-    for (const hub of hubs) {
-        try {
-            await axios.post(hub.callback, eventPayload, {
-                headers: { 'Content-Type': 'application/json' }
-            });
-            console.log(`✅ Event sent to ${hub.callback}`);
-        } catch (err) {
-            console.error(`❌ Failed to notify ${hub.callback}:`, err.message);
-        }
+        console.log(`✅ Event stored in DB: ${eventPayload.eventId}`);
+    } catch (err) {
+        console.error("❌ Failed to store event in DB:", err.message);
     }
 };

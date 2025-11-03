@@ -1,13 +1,19 @@
 const Customer = require('../Models/Customer');
 
 exports.createCustomer = async (data) => {
-    const href = `/customer/${Date.now()}`;
-    const newCustomer = new Customer({ ...data, href });
-    return await newCustomer.save();
+    const newCustomer = new Customer(data);
+    await newCustomer.save();
+
+    if (!newCustomer.href) {
+        newCustomer.href = `https://markethub-api-gateway.onrender.com/tmf-api/customer/v5/customer/${newCustomer._id}`;
+        await newCustomer.save();
+    }
+
+    return newCustomer;
 };
 
 exports.getCustomerById = async (id) => {
-    return await Customer.findOne({ id: id });
+    return await Customer.findById(id);
 };
 
 exports.listCustomers = async () => {
@@ -15,11 +21,10 @@ exports.listCustomers = async () => {
 };
 
 exports.updateCustomer = async (id, data) => {
-    return await Customer.findOneAndUpdate({ id }, data, { new: true });
+    return await Customer.findByIdAndUpdate(id, data, { new: true });
 };
 
-
 exports.deleteCustomer = async (id) => {
-    return await Customer.findOneAndDelete({ id });
+    return await Customer.findByIdAndDelete(id);
 };
 

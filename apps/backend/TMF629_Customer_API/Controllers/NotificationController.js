@@ -1,39 +1,49 @@
 const EventHub = require('../Models/EventHub');
 
-exports.registerListener = async (req, res) => {
+exports.saveEvent = async (req, res) => {
     try {
-        const { callback } = req.body;
-        if (!callback) {
-            return res.status(400).json({ message: "Callback URL is required" });
+        const { "@type": type, eventId, eventTime, event } = req.body;
+
+        if (!type || !eventId || !eventTime || !event) {
+            return res.status(400).json({ message: "Invalid event structure" });
         }
 
-        const existing = await EventHub.findOne({ callback });
-        if (existing) {
-            return res.status(409).json({ message: "Listener already registered" });
-        }
+        await EventHub.create({
+            eventId,
+            eventType: type,
+            eventTime,
+            event
+        });
 
-        const newHub = await EventHub.create({ callback });
-        res.status(201)
-            .location(`/hub/${newHub._id}`)
-            .json({ id: newHub._id, callback: newHub.callback });
+        console.log(`🔔 Event stored in DB: ${eventId}`);
+
+        res.status(201).json({ message: "Event stored successfully", eventId });
     } catch (err) {
-        console.error('❌ Error registering listener:', err.message);
-        res.status(500).json({ error: "Server error" });
+        console.error("❌ Error saving event:", err);
+        res.status(500).json({ message: "Server error" });
     }
 };
 
-exports.unregisterListener = async (req, res) => {
+
+exports.getAllEvents = async (req, res) => {
     try {
-        const { id } = req.params;
-
-        const deleted = await EventHub.findByIdAndDelete(id);
-        if (!deleted) {
-            return res.status(404).json({ message: "Listener not found" });
-        }
-
-        res.status(204).end();
+        const events = await EventHub.find().sort({ eventTime: -1 }).limit(50);
+        res.status(200).json(events);
     } catch (err) {
-        console.error('❌ Error unregistering listener:', err.message);
-        res.status(500).json({ error: "Server error" });
+        console.error("❌ Error fetching events:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
+exports.getEventById = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const event = await EventHub.findOne({ eventId });
+        if (!event) return res.status(404).json({ message: "Event not found" });
+        res.status(200).json(event);
+    } catch (err) {
+        console.error("❌ Error fetching specific event:", err);
+        res.status(500).json({ message: "Server error" });
     }
 };

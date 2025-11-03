@@ -41,7 +41,6 @@ const EngagedPartySchema = {
 
 const CustomerSchema = new mongoose.Schema({
     "@type": { type: String, default: "Customer", required: true },
-    id: { type: String, unique: true },
     name: { type: String, required: true },
     status: { type: String, default: "Created" },
     statusReason: String,
@@ -50,32 +49,14 @@ const CustomerSchema = new mongoose.Schema({
     contactMedium: [ContactMediumSchema],
     relatedParty: [RelatedPartySchema],
     href: String
-}, { timestamps: true },{ _id: false });
+}, { timestamps: true });
 
 
-CustomerSchema.pre('save', async function (next) {
-    if (this.id) return next();
-
-    try {
-        const lastCustomer = await mongoose.model('Customer')
-            .findOne({ id: /^Cust-\d+$/ })
-            .sort({ createdAt: -1 })
-            .lean();
-
-        let newIdNumber = 1;
-        if (lastCustomer && lastCustomer.id) {
-            const match = lastCustomer.id.match(/^Cust-(\d+)$/);
-            if (match) {
-                newIdNumber = parseInt(match[1], 10) + 1;
-            }
-        }
-
-        this.id = `Cust-${newIdNumber}`;
-        this.href = `http://localhost:3000/tmf-api/customerManagement/v5/customer/${this.id}`;
-        next();
-    } catch (err) {
-        next(err);
+CustomerSchema.pre('save', function (next) {
+    if (!this.href) {
+        this.href = `https://markethub-api-gateway.onrender.com/tmf-api/customer/v5/customer/${this._id}`;
     }
+    next();
 });
 
 module.exports = mongoose.model('Customer', CustomerSchema);
