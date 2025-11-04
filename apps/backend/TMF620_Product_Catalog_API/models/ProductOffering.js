@@ -44,6 +44,11 @@ const ProductOfferingSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  catalogId: {
+    type: String,
+    index: true,
+    description: 'Reference to ProductCatalog ID'
+  },
   statusReason: {
     type: String
   },

@@ -27,6 +27,7 @@ const handleValidationErrors = (req, res, next) => {
 
 // Routes
 router.get('/', validateQueryParams, handleValidationErrors, productCatalogController.listProductCatalogs);
+router.get('/:id/productOffering', validateQueryParams, handleValidationErrors, productCatalogController.getProductOfferingsByCatalogId);
 router.get('/:id', productCatalogController.getProductCatalog);
 router.post('/', validateCatalog, handleValidationErrors, productCatalogController.createProductCatalog);
 router.patch('/:id', productCatalogController.updateProductCatalog);
