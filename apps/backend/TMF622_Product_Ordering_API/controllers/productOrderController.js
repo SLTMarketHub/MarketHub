@@ -1,6 +1,7 @@
 import asyncHandler from 'express-async-handler';
 import ProductOrder from '../models/ProductOrder.js';
 import { v4 as uuidv4 } from 'uuid';
+import mongoose from 'mongoose';
 
 // @desc    Create a new product order
 // @route   POST /tmf-api/productOrdering/v1/productOrder
@@ -93,4 +94,41 @@ export const deleteProductOrder = asyncHandler(async (req, res) => {
   await ProductOrder.deleteOne({ id: req.params.id });
   
   res.json({ message: 'Product order removed' });
+});
+
+// @desc    Get product orders by customer ID
+// @route   GET /tmf-api/productOrdering/v1/productOrder/byCustomer/:customerId
+// @access  Public
+export const getProductOrdersByCustomer = asyncHandler(async (req, res) => {
+  const { customerId } = req.params;
+  
+  // Find orders where any relatedParty has the matching ID and role 'customer'
+  const productOrders = await ProductOrder.find({
+    'relatedParty': {
+      $elemMatch: {
+        id: customerId,
+        role: 'customer'
+      }
+    }
+  });
+
+  if (!productOrders || productOrders.length === 0) {
+    res.status(404);
+    throw new Error('No orders found for this customer');
+  }
+
+  // Transform the response to match the required format
+  const formattedOrders = productOrders.map(order => ({
+    id: order.id,
+    customerId: customerId,
+    state: order.state,
+    orderDate: order.orderDate,
+    orderItems: order.orderItem ? order.orderItem.map(item => ({
+      id: item.id,
+      productName: item.product?.name || 'Unknown Product',
+      quantity: item.quantity || 1
+    })) : []
+  }));
+
+  res.json(formattedOrders);
 });
