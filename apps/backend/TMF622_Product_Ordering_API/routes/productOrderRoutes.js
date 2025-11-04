@@ -4,7 +4,8 @@ import {
   getProductOrders,
   getProductOrder,
   updateProductOrder,
-  deleteProductOrder
+  deleteProductOrder,
+  getProductOrdersByCustomer
 } from '../controllers/productOrderController.js';
 
 const router = express.Router();
@@ -25,5 +26,8 @@ router.patch('/:id', updateProductOrder);
 
 // Delete a product order
 router.delete('/:id', deleteProductOrder);
+
+// Get product orders by customer ID
+router.get('/byCustomer/:customerId', getProductOrdersByCustomer);
 
 export default router;
