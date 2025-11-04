@@ -218,6 +218,102 @@ const deleteProductCatalog = async (req, res) => {
   }
 };
 
+// GET /tmf-api/productCatalog/v5/catalog/:id/productOffering - Get product offerings by catalog ID
+const getProductOfferingsByCatalogId = async (req, res) => {
+  try {
+    const { id: catalogId } = req.params;
+    const {
+      offset = 0,
+      limit = 20,
+      fields,
+      name,
+      lifecycleStatus,
+      isSellable
+    } = req.query;
+
+    // Verify catalog exists
+    const catalog = await ProductCatalog.findOne({ id: catalogId });
+    if (!catalog) {
+      return res.status(404).json({ error: 'Product Catalog not found' });
+    }
+
+    // Get category IDs from the catalog
+    const catalogCategoryIds = (catalog.category || []).map(cat => cat.id);
+
+    // Build filter - check both catalogId field and category relationships
+    const orConditions = [];
+    
+    // Add direct catalogId reference condition
+    orConditions.push({ catalogId: catalogId });
+    
+    // Add category-based condition if catalog has categories
+    if (catalogCategoryIds.length > 0) {
+      orConditions.push({ 'category.id': { $in: catalogCategoryIds } });
+    }
+
+    const filter = {
+      $or: orConditions
+    };
+
+    // Add additional filters
+    if (name) filter.name = new RegExp(name, 'i');
+    if (lifecycleStatus) filter.lifecycleStatus = lifecycleStatus;
+    if (isSellable !== undefined) filter.isSellable = isSellable === 'true';
+
+    // Build projection object
+    let projection = {};
+    if (fields) {
+      const fieldList = fields.split(',');
+      fieldList.forEach(field => {
+        projection[field.trim()] = 1;
+      });
+    }
+
+    const ProductOffering = require('../models/ProductOffering');
+    
+    // Import sanitizeAttachments helper from productOfferingController
+    const sanitizeAttachments = (offeringObj) => {
+      if (offeringObj.attachment && Array.isArray(offeringObj.attachment)) {
+        offeringObj.attachment = offeringObj.attachment.map(att => {
+          const { data, ...attachmentMetadata } = att;
+          return {
+            ...attachmentMetadata,
+            href: `/tmf-api/productCatalog/v5/productOffering/${offeringObj.id}/attachments/${att.id}`
+          };
+        });
+      }
+      return offeringObj;
+    };
+
+    const productOfferings = await ProductOffering.find(filter, projection)
+      .skip(parseInt(offset))
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 });
+
+    const total = await ProductOffering.countDocuments(filter);
+
+    // Remove binary data from attachments in response (keep only metadata)
+    const sanitizedOfferings = productOfferings.map(offering => {
+      const offeringObj = offering.toObject();
+      return sanitizeAttachments(offeringObj);
+    });
+
+    res.json({
+      catalogId: catalogId,
+      catalogName: catalog.name,
+      data: sanitizedOfferings,
+      pagination: {
+        offset: parseInt(offset),
+        limit: parseInt(limit),
+        total,
+        hasMore: (parseInt(offset) + parseInt(limit)) < total
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error', message: error.message });
+  }
+};
+
 module.exports = {
   getCatalogOverview,
   globalSearch,
@@ -225,5 +321,6 @@ module.exports = {
   getProductCatalog,
   createProductCatalog,
   updateProductCatalog,
-  deleteProductCatalog
+  deleteProductCatalog,
+  getProductOfferingsByCatalogId
 };
