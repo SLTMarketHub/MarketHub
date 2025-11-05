@@ -1,11 +1,21 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const TimePeriodSchema = {
-    startDateTime: Date,
-    endDateTime: Date
+  startDateTime: Date,
+  endDateTime: Date,
 };
 
-const ContactMediumSchema = new mongoose.Schema({
+const AddressSchema = new mongoose.Schema({
+  street1: String,
+  street2: String,
+  city: String,
+  state: String,
+  postalCode: String,
+  country: String,
+}, { _id: false });
+
+const ContactMediumSchema = new mongoose.Schema(
+  {
     "@type": String,
     contactType: String,
     preferred: Boolean,
@@ -16,30 +26,36 @@ const ContactMediumSchema = new mongoose.Schema({
     country: String,
     postCode: String,
     street1: String,
-    validFor: TimePeriodSchema
-}, { _id: false });
+    validFor: TimePeriodSchema,
+  },
+  { _id: false }
+);
 
-const RelatedPartySchema = new mongoose.Schema({
+const RelatedPartySchema = new mongoose.Schema(
+  {
     "@type": String,
     role: String,
     partyOrPartyRole: {
-        "@type": String,
-        href: String,
-        id: String,
-        name: String,
-        "@referredType": String
-    }
-}, { _id: false });
+      "@type": String,
+      href: String,
+      id: String,
+      name: String,
+      "@referredType": String,
+    },
+  },
+  { _id: false }
+);
 
 const EngagedPartySchema = {
-    "@type": String,
-    href: String,
-    id: String,
-    name: String,
-    "@referredType": String
+  "@type": String,
+  href: String,
+  id: String,
+  name: String,
+  "@referredType": String,
 };
 
-const CustomerSchema = new mongoose.Schema({
+const CustomerSchema = new mongoose.Schema(
+  {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     "@type": { type: String, default: "Customer", required: true },
     name: { type: String, required: true },
@@ -49,16 +65,17 @@ const CustomerSchema = new mongoose.Schema({
     engagedParty: { type: EngagedPartySchema },
     contactMedium: [ContactMediumSchema],
     relatedParty: [RelatedPartySchema],
-    href: String
-}, { timestamps: true });
+    address: AddressSchema, // ✅ Added this
+    href: String,
+  },
+  { timestamps: true }
+);
 
-
-
-CustomerSchema.pre('save', function (next) {
-    if (!this.href) {
-        this.href = `https://markethub-api-gateway.onrender.com/tmf-api/customer/v5/customer/${this._id}`;
-    }
-    next();
+CustomerSchema.pre("save", function (next) {
+  if (!this.href) {
+    this.href = `https://markethub-api-gateway.onrender.com/tmf-api/customer/v5/customer/${this._id}`;
+  }
+  next();
 });
 
-module.exports = mongoose.model('Customer', CustomerSchema);
+module.exports = mongoose.model("Customer", CustomerSchema);
