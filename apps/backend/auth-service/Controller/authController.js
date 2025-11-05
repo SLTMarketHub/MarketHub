@@ -28,19 +28,18 @@ const generateToken = (user) =>
   );
 
 // Create TMF629 Customer Profile
-const createCustomerProfile = async (userData, userId) => {
+async function createCustomerProfile(user, userId) {
   try {
-    const customerData = {
+    const customerPayload = {
       "@type": "Individual",
-      name: userData.username,
+      name: user.username || user.email.split("@")[0],
       status: "Active",
-      validFor: { startDateTime: new Date().toISOString() },
       contactMedium: [
         {
           "@type": "EmailContact",
-          preferred: true,
           contactType: "email",
-          emailAddress: userData.email,
+          preferred: true,
+          emailAddress: user.email,
         },
       ],
       relatedParty: [
@@ -51,14 +50,21 @@ const createCustomerProfile = async (userData, userId) => {
           "@referredType": "AuthUser",
         },
       ],
+      engagedParty: {
+        "@type": "Individual",
+        href: `https://markethub-api-gateway.onrender.com/tmf-api/authService/auth/${userId}`,
+        id: userId,
+        name: user.username,
+        "@referredType": "AuthUser",
+      },
     };
 
-    const response = await axios.post(CUSTOMER_API_BASE, customerData);
-    return response.data;
+    const response = await axios.post(CUSTOMER_API_URL, customerPayload);
+    console.log("✅ TMF Customer profile created:", response.data);
   } catch (error) {
-    throw new Error(`Failed to create customer profile: ${error.message}`);
+    console.error("❌ Failed to create TMF Customer profile:", error.message);
   }
-};
+}
 
 // ================== CONTROLLERS ==================
 
