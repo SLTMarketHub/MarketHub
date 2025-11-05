@@ -5,6 +5,7 @@ const User = require("../Model/userModel");
 const { sendEmail } = require("../utils/emailService");
 const crypto = require("crypto");
 const axios = require("axios");
+const Customer = require("../../TMF629_Customer_API/Models/Customer");
 
 // ================== CONFIG ==================
 const CUSTOMER_API_BASE =
