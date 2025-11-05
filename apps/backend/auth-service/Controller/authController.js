@@ -93,7 +93,7 @@ exports.googleCallback = async (req, res) => {
         } else {
             // New user → ask for role
             return res.redirect(
-                `${process.env.FRONTEND_URL}/auth/google/success?needRole=true&email=${payload.email}&name=${payload.name}`
+                `${process.env.FRONTEND_URL}/google-success?needRole=true&email=${payload.email}&name=${payload.name}`
             );
         }
     } catch (error) {
@@ -129,7 +129,7 @@ exports.completeGoogleSignup = async (req, res) => {
             email,
             username: name || email.split("@")[0],
             role,
-            password: generatedPassword, // hashed auto-generated password
+            password: generatedPassword,
         });
 
         await user.save();
