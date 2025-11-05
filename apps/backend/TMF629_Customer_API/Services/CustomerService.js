@@ -28,3 +28,14 @@ exports.deleteCustomer = async (id) => {
     return await Customer.findByIdAndDelete(id);
 };
 
+exports.getCustomerByEngagedPartyId = async (engagedPartyId) => {
+    return await Customer.findOne({ 'engagedParty.id': engagedPartyId });
+};
+
+exports.updateCustomerByEngagedPartyId = async (engagedPartyId, data) => {
+    return await Customer.findOneAndUpdate(
+        { 'engagedParty.id': engagedPartyId },
+        data,
+        { new: true }
+    );
+};

@@ -52,3 +52,24 @@ exports.deleteCustomer = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+exports.getCustomerByEngagedPartyId = async (req, res) => {
+    try {
+        const customer = await customerService.getCustomerByEngagedPartyId(req.params.engagedPartyId);
+        if (!customer) return res.status(404).json({ message: "Customer not found" });
+        res.json(customer);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.updateCustomerByEngagedPartyId = async (req, res) => {
+    try {
+        const updated = await customerService.updateCustomerByEngagedPartyId(req.params.engagedPartyId, req.body);
+        if (!updated) return res.status(404).json({ message: "Customer not found" });
+        await eventPublisher.publishEvent("CustomerAttributeValueChangeEvent", updated);
+        res.json(updated);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+};

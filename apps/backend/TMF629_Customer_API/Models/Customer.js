@@ -65,7 +65,7 @@ const CustomerSchema = new mongoose.Schema(
     engagedParty: { type: EngagedPartySchema },
     contactMedium: [ContactMediumSchema],
     relatedParty: [RelatedPartySchema],
-    address: AddressSchema, // ✅ Added this
+    address: AddressSchema,
     href: String,
   },
   { timestamps: true }
