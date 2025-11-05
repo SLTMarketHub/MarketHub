@@ -7,7 +7,7 @@ const crypto = require("crypto");
 const axios = require("axios");
 
 // ================== CONFIG ==================
-const CUSTOMER_API_BASE =
+const CUSTOMER_API_URL =
   process.env.TMF629_CUSTOMER_API_BASE ||
   "https://markethub-api-gateway.onrender.com/tmf-api/customer/v5/customer";
 
