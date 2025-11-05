@@ -11,9 +11,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect(process.env.DATABASE_URL, {
+mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 15000, // Timeout after 15s instead of 10s
+    socketTimeoutMS: 45000,         // Close sockets after 45s
+    connectTimeoutMS: 15000,        // Give up initial connection after 15s
+    heartbeatFrequencyMS: 5000,     // Check connection every 5s
+    retryWrites: true,              // Retry write operations
 })
     .then(() => console.log("✅ MongoDB Connected"))
     .catch(err => console.error("❌ Mongo Error:", err));
