@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const authController = require("../Controller/authController");
 
-// Manual login
+// User registration and login
+router.post("/register", authController.register);
 router.post("/login", authController.login);
 
 // Google OAuth

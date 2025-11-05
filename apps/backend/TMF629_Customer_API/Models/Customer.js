@@ -40,6 +40,7 @@ const EngagedPartySchema = {
 };
 
 const CustomerSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     "@type": { type: String, default: "Customer", required: true },
     name: { type: String, required: true },
     status: { type: String, default: "Created" },
@@ -50,6 +51,7 @@ const CustomerSchema = new mongoose.Schema({
     relatedParty: [RelatedPartySchema],
     href: String
 }, { timestamps: true });
+
 
 
 CustomerSchema.pre('save', function (next) {
