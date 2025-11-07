@@ -8,7 +8,7 @@ import mongoose from 'mongoose';
 // @access  Public
 export const createProductOrder = asyncHandler(async (req, res) => {
   const { externalId, description, category, orderItem, relatedParty, relatedPlace, note } = req.body;
-  
+
   const productOrder = await ProductOrder.create({
     id: uuidv4(),
     externalId,
@@ -31,13 +31,13 @@ export const createProductOrder = asyncHandler(async (req, res) => {
 // @access  Public
 export const getProductOrders = asyncHandler(async (req, res) => {
   const { state, externalId } = req.query;
-  
+
   const filter = {};
   if (state) filter.state = state;
   if (externalId) filter.externalId = externalId;
 
   const productOrders = await ProductOrder.find(filter);
-  
+
   res.json({
     status: 'success',
     count: productOrders.length,
@@ -64,7 +64,7 @@ export const getProductOrder = asyncHandler(async (req, res) => {
 // @access  Public
 export const updateProductOrder = asyncHandler(async (req, res) => {
   const { state, note } = req.body;
-  
+
   const productOrder = await ProductOrder.findOne({ id: req.params.id });
 
   if (!productOrder) {
@@ -76,7 +76,7 @@ export const updateProductOrder = asyncHandler(async (req, res) => {
   if (note) productOrder.note = [...(productOrder.note || []), note];
 
   const updatedProductOrder = await productOrder.save();
-  
+
   res.json(updatedProductOrder);
 });
 
@@ -92,43 +92,47 @@ export const deleteProductOrder = asyncHandler(async (req, res) => {
   }
 
   await ProductOrder.deleteOne({ id: req.params.id });
-  
+
   res.json({ message: 'Product order removed' });
 });
 
 // @desc    Get product orders by customer ID
 // @route   GET /tmf-api/productOrdering/v1/productOrder/byCustomer/:customerId
 // @access  Public
-export const getProductOrdersByCustomer = asyncHandler(async (req, res) => {
+// Get orders by customer ID
+export const getOrdersByCustomer = asyncHandler(async (req, res) => {
   const { customerId } = req.params;
-  
-  // Find orders where any relatedParty has the matching ID and role 'customer'
-  const productOrders = await ProductOrder.find({
-    'relatedParty': {
-      $elemMatch: {
-        id: customerId,
-        role: 'customer'
-      }
-    }
-  });
 
-  if (!productOrders || productOrders.length === 0) {
-    res.status(404);
-    throw new Error('No orders found for this customer');
+  // Validate input
+  if (!customerId) {
+    return res.status(400).json({ message: "Customer ID is required" });
   }
 
-  // Transform the response to match the required format
-  const formattedOrders = productOrders.map(order => ({
+  // Fetch orders that include this customer in relatedParty
+  const productOrders = await ProductOrder.find({
+    relatedParty: {
+      $elemMatch: { id: customerId, role: "customer" },
+    },
+  }).lean(); // ✅ use lean() for faster performance (no Mongoose document overhead)
+
+  // Handle empty result
+  if (!productOrders?.length) {
+    return res.status(404).json({ message: "No orders found for this customer" });
+  }
+
+  // ✅ Format and clean response
+  const formattedOrders = productOrders.map((order) => ({
     id: order.id,
-    customerId: customerId,
+    customerId,
     state: order.state,
     orderDate: order.orderDate,
-    orderItems: order.orderItem ? order.orderItem.map(item => ({
+    orderItems: (order.orderItem || []).map((item) => ({
       id: item.id,
-      productName: item.product?.name || 'Unknown Product',
-      quantity: item.quantity || 1
-    })) : []
+      productName: item.product?.name ?? "Unknown Product",
+      quantity: item.quantity ?? 1,
+    })),
   }));
 
-  res.json(formattedOrders);
+  return res.status(200).json(formattedOrders);
 });
+
