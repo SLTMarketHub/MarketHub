@@ -100,7 +100,7 @@ export const deleteProductOrder = asyncHandler(async (req, res) => {
 // @route   GET /tmf-api/productOrdering/v1/productOrder/byCustomer/:customerId
 // @access  Public
 // Get orders by customer ID
-export const getOrdersByCustomer = asyncHandler(async (req, res) => {
+export const getProductOrdersByCustomer = asyncHandler(async (req, res) => {
   const { customerId } = req.params;
 
   // Validate input
