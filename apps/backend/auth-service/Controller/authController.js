@@ -4,6 +4,13 @@ const { OAuth2Client } = require("google-auth-library");
 const User = require("../Model/userModel");
 const { sendEmail } = require("../utils/emailService");
 const crypto = require("crypto");
+const axios = require('axios');
+
+// ================== CONFIG ==================
+const CUSTOMER_API_URL =
+    process.env.TMF629_CUSTOMER_API_BASE ||
+    "https://markethub-api-gateway.onrender.com/tmf-api/customer/v5/customer";
+
 
 const client = new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
@@ -21,7 +28,97 @@ const generateToken = (user) =>
         process.env.JWT_SECRET,
         { expiresIn: "7d" }
     );
+
+// Create TMF629 Customer Profile
+async function createCustomerProfile(user) {
+    if (!user || !user.role) return;
+
+    if (user.role.toLowerCase() !== "customer") return;
+
+    const customerPayload = {
+        "@type": "Individual",
+        name: user.username || user.email.split("@")[0],
+        status: "Active",
+        contactMedium: [
+            {
+                "@type": "EmailContact",
+                contactType: "email",
+                preferred: true,
+                emailAddress: user.email,
+            },
+        ],
+        relatedParty: [
+            {
+                "@type": "Individual",
+                role: "Customer",
+                id: user._id,
+                "@referredType": "AuthUser",
+
+
+            },
+        ],
+        engagedParty: {
+            "@type": "Individual",
+            href: `https://markethub-api-gateway.onrender.com/tmf-api/authService/auth/${user._id}`,
+            id: user._id,
+            name: user.username,
+            "@referredType": "AuthUser",
+        },
+    };
+
+    try{
+        const response = await axios.post(CUSTOMER_API_URL,customerPayload);
+        console.log("✅ TMF Customer profile created:", response.data);
+    } catch (error) {
+        console.error("❌ Failed to create TMF Customer profile:", error.message);
+    }
+}
+
 // ================= ROUTE LOGIC =================
+
+// Register New User (Manual)
+exports.register = async (req, res) => {
+    try {
+        const { username, email, password } = req.body;
+
+        const existingUser = await User.findOne({ email });
+        if (existingUser)
+            return res.status(400).json({ message: "User already exists" });
+
+        const user = new User({
+            username,
+            email,
+            password,
+            role: "Customer",
+        });
+        await user.save();
+
+        // Create TMF Customer Profile
+        try {
+            await createCustomerProfile(user);
+        } catch (err) {
+            await User.findByIdAndDelete(user._id);
+            throw err;
+        }
+
+        const token = generateToken(user);
+
+        res.status(201).json({
+            message: "Registration successful",
+            token,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Server error. Please try again later." });
+    }
+};
+
+
 
 // Manual login
 exports.login = async (req, res) => {
@@ -49,7 +146,7 @@ exports.login = async (req, res) => {
             },
         });
     } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
+        res.status(500).json({ message: "Server error. Please try again later."});
     }
 };
 
@@ -78,22 +175,14 @@ exports.googleCallback = async (req, res) => {
         let user = await User.findOne({ email: payload.email });
 
         if (user) {
-            // Existing user → login
-            const token = jwt.sign(
-                { id: user._id, role: user.role, email: user.email, username: user.username },
-                process.env.JWT_SECRET,
-                { expiresIn: "7d" }
-            );
-
-            res.redirect(
+            const token = generateToken(user);
+            return res.redirect(
                 `${process.env.FRONTEND_URL}/google-callback?token=${token}&role=${user.role}&username=${encodeURIComponent(user.username)}`
             );
 
-
         } else {
-            // New user → ask for role
             return res.redirect(
-                `${process.env.FRONTEND_URL}/google-success?needRole=true&email=${payload.email}&name=${payload.name}`
+                `${process.env.FRONTEND_URL}/auth/google/success?needRole=true&email=${payload.email}&name=${payload.name}`
             );
         }
     } catch (error) {
@@ -113,18 +202,12 @@ exports.completeGoogleSignup = async (req, res) => {
 
         let existingUser = await User.findOne({ email });
         if (existingUser) {
-            // User already exists → just login
-            const token = jwt.sign(
-                { id: existingUser._id, role: existingUser.role, email: existingUser.email },
-                process.env.JWT_SECRET,
-                { expiresIn: "7d" }
-            );
+            const token = generateToken(existingUser);
             return res.json({ token, user: existingUser });
         }
 
-        // Auto-generate a secure random password
         const generatedPassword = crypto.randomBytes(12).toString("hex");
-        // Create new user
+
         const user = new User({
             email,
             username: name || email.split("@")[0],
@@ -134,16 +217,29 @@ exports.completeGoogleSignup = async (req, res) => {
 
         await user.save();
 
-        const token = jwt.sign(
-            { id: user._id, role: user.role, email: user.email },
-            process.env.JWT_SECRET,
-            { expiresIn: "7d" }
-        );
+        // Create TMF customer profile if customer
+        if (user.role === "Customer") {
+            try {
+                await createCustomerProfile(user);
+            } catch (err) {
+                console.error("Failed to create TMF Customer profile:", err.message);
+            }
+        }
 
-        res.json({ token, user });
+        const token = generateToken(user)
+        res.json({
+            message: "Google signup complete",
+            token,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+            },
+        });
     } catch (error) {
-        console.error("Complete Google Signup error", error);
-        res.status(500).json({ message: "Server error" });
+        console.error("Complete Google Signup error:", error);
+        res.status(500).json({ message: "Server error. Please try again later." });
     }
 };
 
@@ -190,10 +286,11 @@ exports.completeSignup = async (req, res) => {
         }
 
         let user = await User.findOne({ email });
+
         if (user) {
-            // Update profile if user exists
             if (username) user.username = username;
             if (role) user.role = role;
+            if (password) user.password = password;
             await user.save();
         } else {
             user = new User({ username, email, password, role });
@@ -202,22 +299,28 @@ exports.completeSignup = async (req, res) => {
 
         delete otpStore[email];
 
-        const token = generateToken(user);
+        if (user.role && user.role.toLowerCase() === "customer") {
+            try {
+                createCustomerProfile(user);
+            } catch (err) {
+                console.error("⚠️ Failed to Create customer record:", err.message);
+            }
+        }
+            const token = generateToken(user);
 
-        res.status(201).json({
-            message: "User registered/updated successfully",
-            userId: user._id,
-            token,
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                role: user.role,
-            },
-        });
-    } catch (err) {
-        console.error("Error completing signup:", err);
-        res.status(500).json({ error: "Server error" });
+            res.status(201).json({
+                message: "Signup complete",
+                token,
+                user: {
+                    id: user._id,
+                    username: user.username,
+                    email: user.email,
+                    role: user.role,
+                },
+            });
+
+    } catch (error) {
+        console.error("Error completing signup:", error);
+        res.status(500).json({ error: "Server error. Please try again later." });
     }
 };
-

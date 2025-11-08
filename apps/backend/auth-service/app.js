@@ -16,13 +16,8 @@ connectDB();
 
 const app = express();
 
-app.use(cors({
-    origin: [
-        'http://localhost:5173'
-    ],
-    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-    credentials: true
-}));
+
+app.use(cors({origin: process.env.FRONTEND_URL, credentials: true}));
 app.use(express.json());
 
 app.use(bodyParser.json());
@@ -30,8 +25,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
 
-app.use('/tmf-api/authService/auth', authRoutes);
-app.use('/tmf-api/authService/users', userRoutes);
+app.use('/auth', authRoutes);
+app.use('/users', userRoutes);
 
 app.use(errorHandler);
 
