@@ -112,7 +112,7 @@ const getProductOfferingByCategory = async (req, res) => {
     const categoryId = req.params.id;
     const {
       offset = 0,
-      limit = 20,
+      limit = 0,
       fields,
       lifecycleStatus,
       isSellable,
