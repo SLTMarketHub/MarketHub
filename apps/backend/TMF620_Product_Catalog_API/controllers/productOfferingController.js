@@ -106,6 +106,68 @@ const getProductOffering = async (req, res) => {
   }
 };
 
+// GET /tmf-api/productCatalog/v5/productOffering/byCategory/:id - Get product offerings by Category
+const getProductOfferingByCategory = async (req, res) => {
+  try {
+    const categoryId = req.params.id;
+    const {
+      offset = 0,
+      limit = 20,
+      fields,
+      lifecycleStatus,
+      isSellable,
+      'validFor.startDateTime.gte': startDateGte,
+      'validFor.startDateTime.lte': startDateLte
+    } = req.query;
+
+    // Build filter object
+    const filter = {
+      'category.id': categoryId
+    };
+    if (lifecycleStatus) filter.lifecycleStatus = lifecycleStatus;
+    if (isSellable !== undefined) filter.isSellable = isSellable === 'true';
+    if (startDateGte || startDateLte) {
+      filter['validFor.startDateTime'] = {};
+      if (startDateGte) filter['validFor.startDateTime'].$gte = new Date(startDateGte);
+      if (startDateLte) filter['validFor.startDateTime'].$lte = new Date(startDateLte);
+    }
+
+    // Build projection object
+    let projection = {};
+    if (fields) {
+      const fieldList = fields.split(',');
+      fieldList.forEach(field => {
+        projection[field.trim()] = 1;
+      });
+    }
+
+    const productOfferings = await ProductOffering.find(filter, projection)
+      .skip(parseInt(offset))
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 });
+
+    const total = await ProductOffering.countDocuments(filter);
+
+    // Remove binary data from attachments
+    const sanitizedOfferings = productOfferings.map(offering => {
+      const offeringObj = offering.toObject();
+      return sanitizeAttachments(offeringObj);
+    });
+
+    res.json({
+      data: sanitizedOfferings,
+      pagination: {
+        offset: parseInt(offset),
+        limit: parseInt(limit),
+        total,
+        hasMore: (parseInt(offset) + parseInt(limit)) < total
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error', message: error.message });
+  }
+};
+
 // POST /tmf-api/productCatalog/v5/productOffering - Create new product offering
 const createProductOffering = async (req, res) => {
   try {
@@ -170,6 +232,7 @@ const deleteProductOffering = async (req, res) => {
 module.exports = {
   listProductOfferings,
   getProductOffering,
+  getProductOfferingByCategory,
   createProductOffering,
   updateProductOffering,
   deleteProductOffering,
