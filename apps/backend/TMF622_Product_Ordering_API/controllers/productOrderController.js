@@ -125,15 +125,16 @@ export const getProductOrdersByCustomer = asyncHandler(async (req, res) => {
     id: order.id,
     customerId,
     state: order.state,
-    orderDate: order.orderDate,
+    orderDate: order.orderDate?.$date ?? order.orderDate ?? null,
     orderItems: (order.orderItem || []).map((item) => ({
       id: item.id,
       productName: item.product?.name ?? "Unknown Product",
       quantity: item.quantity ?? 1,
     })),
-    address: order.relatedPlace?.name ?? "Unknown",
-    type: order.note?.text ?? "Unknown"
+    address: order.relatedPlace?.[0]?.name ?? "Unknown",
+    type: order.note?.[0]?.text ?? "Unknown",
   }));
+
 
   return res.status(200).json(formattedOrders);
 });
