@@ -131,6 +131,8 @@ export const getProductOrdersByCustomer = asyncHandler(async (req, res) => {
       productName: item.product?.name ?? "Unknown Product",
       quantity: item.quantity ?? 1,
     })),
+    address: order.relatedPlace?.name ?? "Unknown",
+    type: order.note?.text ?? "Unknown"
   }));
 
   return res.status(200).json(formattedOrders);
