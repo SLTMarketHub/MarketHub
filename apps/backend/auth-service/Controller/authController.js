@@ -1,13 +1,12 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { OAuth2Client } from "google-auth-library";
+import { OAuth2Client, google } from "google-auth-library";
 import crypto from "crypto";
 import axios from "axios";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 
 import User from "../Model/userModel.js";
-import { sendEmail } from "../utils/emailService.js";
 
 dotenv.config();
 
@@ -22,8 +21,18 @@ const client = new OAuth2Client(
   process.env.GOOGLE_CALLBACK_URL
 );
 
+// Gmail OAuth2 for Nodemailer
+const oAuth2Client = new google.auth.OAuth2(
+  process.env.GMAIL_CLIENT_ID,
+  process.env.GMAIL_CLIENT_SECRET,
+  "https://developers.google.com/oauthplayground"
+);
+oAuth2Client.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOKEN });
+
 // Temporary OTP store
 let otpStore = {};
+
+// ================== HELPERS ==================
 
 // Generate JWT token
 const generateToken = (user) =>
@@ -80,7 +89,7 @@ async function createCustomerProfile(user) {
   }
 }
 
-// ================= ROUTE LOGIC =================
+// ================== ROUTES ==================
 
 // Register New User (Manual)
 export const register = async (req, res) => {
@@ -240,7 +249,7 @@ export const completeGoogleSignup = async (req, res) => {
   }
 };
 
-// Send OTP
+// Send OTP using Gmail OAuth2
 export const sendOTP = async (req, res) => {
   try {
     const { email } = req.body;
@@ -249,11 +258,17 @@ export const sendOTP = async (req, res) => {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
+    const accessToken = await oAuth2Client.getAccessToken();
+
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
+        type: "OAuth2",
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        clientId: process.env.GMAIL_CLIENT_ID,
+        clientSecret: process.env.GMAIL_CLIENT_SECRET,
+        refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+        accessToken: accessToken.token,
       },
     });
 
@@ -276,8 +291,6 @@ export const sendOTP = async (req, res) => {
       success: false,
       message: "Failed to send OTP",
       error: error.message,
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
     });
   }
 };
