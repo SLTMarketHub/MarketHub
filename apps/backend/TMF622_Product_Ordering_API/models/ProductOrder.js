@@ -22,7 +22,11 @@ const productOrderSchema = new mongoose.Schema({
       name: String
     },
     quantity: Number,
-    state: String
+    state: String,
+    price: {
+      amount: { type: Number, default: 0 },
+      currency: { type: String, default: 'USD' }
+    }
   }],
   relatedParty: [{
     id: String,
