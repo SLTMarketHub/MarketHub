@@ -1,10 +1,14 @@
-const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const User = require('../Model/userModel');
+import passport from 'passport';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import User from '../Model/userModel.js';
 
 // Only configure GoogleStrategy if the required env vars are present.
-// This avoids throwing during a plain `require()` when running checks without full env.
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_CALLBACK_URL) {
+// This avoids throwing during a plain `import` when running checks without full env.
+if (
+    process.env.GOOGLE_CLIENT_ID &&
+    process.env.GOOGLE_CLIENT_SECRET &&
+    process.env.GOOGLE_CALLBACK_URL
+) {
     passport.use(
         new GoogleStrategy(
             {
@@ -32,7 +36,9 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.
     );
 } else {
     // Skip configuring Google strategy when env vars are not set (e.g., local linting/tests).
-    console.warn('Google OAuth not configured: missing GOOGLE_CLIENT_ID/SECRET/CALLBACK_URL');
+    console.warn(
+        'Google OAuth not configured: missing GOOGLE_CLIENT_ID/SECRET/CALLBACK_URL'
+    );
 }
 
 passport.serializeUser((user, done) => {
