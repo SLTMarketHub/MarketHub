@@ -9,6 +9,7 @@ const transporter = nodemailer.createTransport({
 });
 
 async function sendEmail(to, subject, html) {
+    console.log("Email User :", process.env.EMAIL_USER, "Email Pass : ",process.env.EMAIL_PASS)
     const mailOptions = {
         from: process.env.EMAIL_USER,
         to,
