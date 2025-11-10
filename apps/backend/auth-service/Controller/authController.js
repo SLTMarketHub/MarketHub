@@ -1,10 +1,15 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const { OAuth2Client } = require("google-auth-library");
-const User = require("../Model/userModel");
-const { sendEmail } = require("../utils/emailService");
-const crypto = require("crypto");
-const axios = require("axios");
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
+import crypto from "crypto";
+import axios from "axios";
+import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+
+import User from "../Model/userModel.js";
+import { sendEmail } from "../utils/emailService.js";
+
+dotenv.config();
 
 // ================== CONFIG ==================
 const CUSTOMER_API_URL =
@@ -78,7 +83,7 @@ async function createCustomerProfile(user) {
 // ================= ROUTE LOGIC =================
 
 // Register New User (Manual)
-exports.register = async (req, res) => {
+export const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
@@ -115,7 +120,7 @@ exports.register = async (req, res) => {
 };
 
 // Manual login
-exports.login = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -145,7 +150,7 @@ exports.login = async (req, res) => {
 };
 
 // Google OAuth redirect
-exports.googleRedirect = (req, res) => {
+export const googleRedirect = (req, res) => {
   const url = client.generateAuthUrl({
     access_type: "offline",
     prompt: "consent",
@@ -155,7 +160,7 @@ exports.googleRedirect = (req, res) => {
 };
 
 // Google OAuth callback
-exports.googleCallback = async (req, res) => {
+export const googleCallback = async (req, res) => {
   const { code } = req.query;
   try {
     const { tokens } = await client.getToken(code);
@@ -188,7 +193,7 @@ exports.googleCallback = async (req, res) => {
 };
 
 // Complete Google signup
-exports.completeGoogleSignup = async (req, res) => {
+export const completeGoogleSignup = async (req, res) => {
   try {
     const { email, name, role } = req.body;
 
@@ -239,9 +244,8 @@ exports.completeGoogleSignup = async (req, res) => {
 export const sendOTP = async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) {
+    if (!email)
       return res.status(400).json({ success: false, message: "Email is required" });
-    }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -260,13 +264,10 @@ export const sendOTP = async (req, res) => {
       html: `<p>Your OTP is: <strong>${otp}</strong></p>`,
     };
 
-    // ✅ Debug: log email & env check
-    console.log("📧 Sending OTP to:", email);
-    console.log("Using EMAIL_USER:", process.env.EMAIL_USER ? "✅" : "❌ Missing");
-    console.log("Using EMAIL_PASS:", process.env.EMAIL_PASS ? "✅" : "❌ Missing");
-
     await transporter.sendMail(mailOptions);
     console.log(`✅ OTP ${otp} sent to ${email}`);
+
+    otpStore[email] = { otp, expiresAt: Date.now() + 5 * 60 * 1000 };
 
     res.status(200).json({ success: true, message: "OTP sent successfully" });
   } catch (error) {
@@ -276,27 +277,24 @@ export const sendOTP = async (req, res) => {
 };
 
 // Complete signup (manual or OTP-based)
-exports.completeSignup = async (req, res) => {
+export const completeSignup = async (req, res) => {
   try {
     const { username, email, password, role, otp } = req.body;
 
-    if (!username || !email || !role) {
+    if (!username || !email || !role)
       return res.status(400).json({ error: "Missing required fields" });
-    }
 
     const otpData = otpStore[email];
-    if (!otpData && !req.body.google) {
+    if (!otpData && !req.body.google)
       return res.status(400).json({ error: "OTP not found or expired" });
-    }
 
     if (otpData && Date.now() > otpData.expiresAt) {
       delete otpStore[email];
       return res.status(400).json({ error: "OTP expired" });
     }
 
-    if (otpData && otpData.otp != otp) {
+    if (otpData && otpData.otp != otp)
       return res.status(400).json({ error: "Invalid OTP" });
-    }
 
     let user = await User.findOne({ email });
 
