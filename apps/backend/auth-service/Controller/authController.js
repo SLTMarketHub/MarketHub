@@ -236,28 +236,42 @@ exports.completeGoogleSignup = async (req, res) => {
 };
 
 // Send OTP
-exports.sendOTP = async (req, res) => {
+export const sendOTP = async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email)
-      return res.status(400).json({ message: "Email is required" });
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required" });
+    }
 
-    const otp = Math.floor(100000 + Math.random() * 900000);
-    otpStore[email] = { otp, expiresAt: Date.now() + 5 * 60 * 1000 }; // 5 minutes expiry
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    await sendEmail(
-      email,
-      "Your MarketHub OTP Code",
-      `<p>Your verification OTP is: <b>${otp}</b>. It will expire in 5 minutes.</p>`
-    );
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
 
-    console.log("📩 OTP sent to:", email);
-    res.json({ message: "OTP sent successfully" });
+    const mailOptions = {
+      from: `"MarketHub" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Your MarketHub OTP",
+      html: `<p>Your OTP is: <strong>${otp}</strong></p>`,
+    };
+
+    // ✅ Debug: log email & env check
+    console.log("📧 Sending OTP to:", email);
+    console.log("Using EMAIL_USER:", process.env.EMAIL_USER ? "✅" : "❌ Missing");
+    console.log("Using EMAIL_PASS:", process.env.EMAIL_PASS ? "✅" : "❌ Missing");
+
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ OTP ${otp} sent to ${email}`);
+
+    res.status(200).json({ success: true, message: "OTP sent successfully" });
   } catch (error) {
-    console.error("Send OTP error:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to send OTP", error: error.message });
+    console.error("❌ Error in sendOtp:", error);
+    res.status(500).json({ success: false, message: "Failed to send OTP", error: error.message });
   }
 };
 
