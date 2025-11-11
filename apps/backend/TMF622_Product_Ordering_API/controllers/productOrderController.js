@@ -7,7 +7,7 @@ import mongoose from 'mongoose';
 // @route   POST /tmf-api/productOrdering/v1/productOrder
 // @access  Public
 export const createProductOrder = asyncHandler(async (req, res) => {
-  const { externalId, description, category, orderItem, relatedParty, relatedPlace, note } = req.body;
+  const { externalId, description, category, orderItem, relatedParty, relatedPlace, note, total } = req.body;
 
   if (!orderItem || !Array.isArray(orderItem) || orderItem.length === 0) {
     res.status(400);
