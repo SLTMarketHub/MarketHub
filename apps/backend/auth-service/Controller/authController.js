@@ -1,6 +1,8 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { OAuth2Client, google } from "google-auth-library";
+import pkg from 'google-auth-library';
+const { OAuth2Client, google } = pkg;
+
 import crypto from "crypto";
 import axios from "axios";
 import nodemailer from "nodemailer";
