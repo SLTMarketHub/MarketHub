@@ -24,7 +24,7 @@ const client = new OAuth2Client(
 );
 
 // Gmail OAuth2 for Nodemailer
-const oAuth2Client = new google.auth.OAuth2(
+const oAuth2Client = new OAuth2Client(
   process.env.GMAIL_CLIENT_ID,
   process.env.GMAIL_CLIENT_SECRET,
   "https://developers.google.com/oauthplayground"
