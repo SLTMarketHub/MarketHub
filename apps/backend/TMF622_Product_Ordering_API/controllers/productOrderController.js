@@ -135,7 +135,6 @@ export const deleteProductOrder = asyncHandler(async (req, res) => {
 // @desc    Get product orders by customer ID
 // @route   GET /tmf-api/productOrdering/v1/productOrder/byCustomer/:customerId
 // @access  Public
-// Get orders by customer ID
 export const getProductOrdersByCustomer = asyncHandler(async (req, res) => {
   const { customerId } = req.params;
 
@@ -146,10 +145,8 @@ export const getProductOrdersByCustomer = asyncHandler(async (req, res) => {
 
   // Fetch orders that include this customer in relatedParty
   const productOrders = await ProductOrder.find({
-    relatedParty: {
-      $elemMatch: { id: customerId, role: "customer" },
-    },
-  }).lean(); // ✅ use lean() for faster performance (no Mongoose document overhead)
+    relatedParty: { $elemMatch: { id: customerId, role: "customer" } },
+  }).lean();
 
   // Handle empty result
   if (!productOrders?.length) {
@@ -161,11 +158,11 @@ export const getProductOrdersByCustomer = asyncHandler(async (req, res) => {
     id: order.id,
     customerId,
     state: order.state,
-    orderDate: order.orderDate?.$date ?? order.orderDate ?? null,
+    orderDate: order.createdAt ?? null, // ✅ use createdAt from timestamps
     orderItems: (order.orderItem || []).map((item) => ({
       id: item.id,
       productName: item.product?.name ?? "Unknown Product",
-      price: item.price?.amout ?? "N/A",
+      price: item.price?.amount ?? "N/A",
       quantity: item.quantity ?? 1,
     })),
     address: order.relatedPlace?.[0]?.name ?? "Unknown",
@@ -174,4 +171,5 @@ export const getProductOrdersByCustomer = asyncHandler(async (req, res) => {
 
   return res.status(200).json(formattedOrders);
 });
+
 
