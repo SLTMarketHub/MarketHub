@@ -243,7 +243,10 @@ export const completeGoogleSignup = async (req, res) => {
 // Send OTP
 export const sendOTP = async (req, res) => {
   try {
-    const { email } = req.body;
+    console.log("Incoming body:", req.body);
+    const email = req.body?.email;
+    console.log("Email here", email);
+     
     if (!email)
       return res.status(400).json({ success: false, message: "Email is required" });
 
