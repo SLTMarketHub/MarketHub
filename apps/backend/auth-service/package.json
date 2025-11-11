@@ -1,6 +1,7 @@
 {
   "name": "user-api",
   "version": "1.0.0",
+  "type": "module",
   "description": "User management API with Node, Express, MongoDB",
   "main": "server.js",
   "scripts": {
