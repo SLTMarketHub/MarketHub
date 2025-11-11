@@ -55,6 +55,7 @@ export const createProductOrder = asyncHandler(async (req, res) => {
     relatedParty,
     relatedPlace,
     note,
+    total,
     baseType: 'ProductOrder',
     schemaLocation: 'https://github.com/tmforum-rand/schemas/blob/ProductOrdering/ProductOrder.schema.json'
   });
@@ -167,6 +168,7 @@ export const getProductOrdersByCustomer = asyncHandler(async (req, res) => {
     })),
     address: order.relatedPlace?.[0]?.name ?? "Unknown",
     type: order.note?.[0]?.text ?? "Unknown",
+    total: order.total
   }));
 
   return res.status(200).json(formattedOrders);

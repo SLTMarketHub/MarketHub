@@ -45,6 +45,7 @@ const productOrderSchema = new mongoose.Schema({
     date: Date,
     author: String
   }],
+  total: Number,
   baseType: { type: String, default: 'ProductOrder' },
   schemaLocation: { type: String, default: 'https://github.com/tmforum-rand/schemas/blob/ProductOrdering/ProductOrder.schema.json' }
 }, {
