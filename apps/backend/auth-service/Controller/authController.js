@@ -248,8 +248,10 @@ exports.completeGoogleSignup = async (req, res) => {
 // Send OTP
 exports.sendOTP = async (req, res) => {
   try {
-    const { email } = req.body;
-    console.log("Email : ", email)
+    console.log("Incoming body:", req.body);
+    const email = req.body?.email;
+    console.log("Email here", email);
+
     if (!email) return res.status(400).json({ message: "Email is required" });
 
     const otp = Math.floor(100000 + Math.random() * 900000);
