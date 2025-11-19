@@ -40,41 +40,59 @@ export async function createCustomerProfile(user) {
   if (user.role.toLowerCase() !== "customer") return;
 
   const customerPayload = {
-    "@type": "Individual",
+    "@type": "Customer",
+    userId: user._id,
     name: user.username || user.email.split("@")[0],
     status: "Active",
-    contactMedium: [
-      {
-        "@type": "EmailContact",
-        contactType: "email",
-        preferred: true,
-        emailAddress: user.email,
-      },
-    ],
-    relatedParty: [
-      {
-        "@type": "Individual",
-        role: "Customer",
-        id: user._id,
-        "@referredType": "AuthUser",
-      },
-    ],
+
     engagedParty: {
       "@type": "Individual",
       href: `https://markethub-api-gateway.onrender.com/tmf-api/authService/auth/${user._id}`,
       id: user._id,
       name: user.username,
-      "@referredType": "AuthUser",
+      "@referredType": "AuthUser"
     },
+
+    contactMedium: [
+      {
+        "@type": "EmailContact",
+        contactType: "email",
+        preferred: true,
+        emailAddress: user.email
+      }
+    ],
+
+    relatedParty: [
+      {
+        "@type": "Individual",
+        role: "Customer",
+        partyOrPartyRole: {
+          "@type": "Individual",
+          id: user._id,
+          name: user.username,
+          "@referredType": "AuthUser",
+          href: `https://markethub-api-gateway.onrender.com/tmf-api/authService/auth/${user._id}`
+        }
+      }
+    ],
   };
 
   try {
-    const response = await axios.post(CUSTOMER_API_URL, customerPayload);
-    console.log("✅ TMF Customer profile created:", response.data);
+    const res = await axios.post(CUSTOMER_API_URL, customerPayload, {
+      headers: { "Content-Type": "application/json" }
+    });
+    console.log("✅ Customer created:", res.data);
+    return true;
   } catch (error) {
-    console.error("❌ Failed to create TMF Customer profile:", error.message);
+    console.error("❌ Customer creation failed:", {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data
+    });
+    return false;
   }
 }
+
 
 // ================= ROUTE LOGIC =================
 
@@ -95,12 +113,13 @@ export const register = async (req, res) => {
     });
 
     await user.save();
+    const customerCreated = await createCustomerProfile(user);
 
-    try {
-      await createCustomerProfile(user);
-    } catch (err) {
+    if (!customerCreated) {
       await User.findByIdAndDelete(user._id);
-      throw err;
+      return res.status(500).json({
+        message: "Failed to create customer record. Please try again."
+      });
     }
 
     const token = generateToken(user);
@@ -224,10 +243,13 @@ export const completeGoogleSignup = async (req, res) => {
     await user.save();
 
     if (user.role === "Customer") {
-      try {
-        await createCustomerProfile(user);
-      } catch (err) {
-        console.error("Failed to create TMF Customer profile:", err);
+      const customerCreated = await createCustomerProfile(user);
+
+      if (!customerCreated) {
+        await User.findByIdAndDelete(user._id);
+        return res.status(500).json({
+          message: "Failed to create customer record. Try again."
+        });
       }
     }
 
@@ -314,11 +336,14 @@ export const completeSignup = async (req, res) => {
 
     delete otpStore[email];
 
-    if (user.role?.toLowerCase() === "customer") {
-      try {
-        await createCustomerProfile(user);
-      } catch (err) {
-        console.error("⚠️ Failed to Create customer record:", err);
+    if (user.role.toLowerCase() === "customer") {
+      const created = await createCustomerProfile(user);
+
+      if (!created) {
+        await User.findByIdAndDelete(user._id);
+        return res.status(500).json({
+          error: "Failed to create customer profile"
+        });
       }
     }
 
