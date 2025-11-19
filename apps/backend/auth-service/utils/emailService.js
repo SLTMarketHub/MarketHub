@@ -1,21 +1,20 @@
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
     auth: {
-        user: process.env.EMAIL_USER,  // your Gmail address
-        pass: 'jnafvptbgngfibdd' || process.env.EMAIL_PASS   // your Gmail App Password
+        user: "markethubdev@gmail.com",     // HARD CODED
+        pass: "jnafvptbgngfibdd"            // HARD CODED (App Password)
     }
 });
 
 export async function sendEmail(to, subject, html) {
-    const mailOptions = {
-        from: process.env.EMAIL_USER,
+    return transporter.sendMail({
+        from: "markethubdev@gmail.com",
         to,
         subject,
         html
-    };
-
-    return transporter.sendMail(mailOptions);
+    });
 }
-
