@@ -2,8 +2,7 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import User from '../Model/userModel.js';
 
-// Only configure GoogleStrategy if the required env vars are present.
-// This avoids throwing during a plain `import` when running checks without full env.
+// Only configure GoogleStrategy if env vars are present
 if (
     process.env.GOOGLE_CLIENT_ID &&
     process.env.GOOGLE_CLIENT_SECRET &&
@@ -26,7 +25,7 @@ if (
                         return done(null, existingUser);
                     }
 
-                    // Instead of creating now, return a temp object for OTP + profile completion
+                    // Return temp object for OTP flow + profile completion
                     return done(null, { temp: true, email, username });
                 } catch (err) {
                     done(err, false);
@@ -35,7 +34,6 @@ if (
         )
     );
 } else {
-    // Skip configuring Google strategy when env vars are not set (e.g., local linting/tests).
     console.warn(
         'Google OAuth not configured: missing GOOGLE_CLIENT_ID/SECRET/CALLBACK_URL'
     );
@@ -49,3 +47,5 @@ passport.deserializeUser(async (id, done) => {
     const user = await User.findById(id);
     done(null, user);
 });
+
+export default passport;

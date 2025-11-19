@@ -1,56 +1,40 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import pkg from 'google-auth-library';
-const { OAuth2Client, google } = pkg;
-
+import { OAuth2Client } from "google-auth-library";
+import User from "../Model/userModel.js";
+import { sendEmail } from "../utils/emailService.js";
 import crypto from "crypto";
 import axios from "axios";
-import nodemailer from "nodemailer";
-import dotenv from "dotenv";
-
-import User from "../Model/userModel.js";
-
-dotenv.config();
 
 // ================== CONFIG ==================
 const CUSTOMER_API_URL =
-  process.env.TMF629_CUSTOMER_API_BASE ||
-  "https://markethub-api-gateway.onrender.com/tmf-api/customer/v5/customer";
+    process.env.TMF629_CUSTOMER_API_BASE ||
+    "https://markethub-api-gateway.onrender.com/tmf-api/customer/v5/customer";
 
 const client = new OAuth2Client(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_CALLBACK_URL
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    process.env.GOOGLE_CALLBACK_URL
 );
-
-// Gmail OAuth2 for Nodemailer
-const oAuth2Client = new OAuth2Client(
-  process.env.GMAIL_CLIENT_ID,
-  process.env.GMAIL_CLIENT_SECRET,
-  "https://developers.google.com/oauthplayground"
-);
-oAuth2Client.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOKEN });
 
 // Temporary OTP store
 let otpStore = {};
 
-// ================== HELPERS ==================
-
-// Generate JWT token
+// Generate JWT
 const generateToken = (user) =>
-  jwt.sign(
-    {
-      id: user._id,
-      role: user.role,
-      email: user.email,
-      username: user.username || user.name,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
+    jwt.sign(
+        {
+          id: user._id,
+          role: user.role,
+          email: user.email,
+          username: user.username || user.name,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "7d" }
+    );
 
-// Create TMF Customer Profile
-async function createCustomerProfile(user) {
+// Create TMF629 Customer Profile
+export async function createCustomerProfile(user) {
   if (!user || !user.role) return;
   if (user.role.toLowerCase() !== "customer") return;
 
@@ -91,9 +75,9 @@ async function createCustomerProfile(user) {
   }
 }
 
-// ================== ROUTES ==================
+// ================= ROUTE LOGIC =================
 
-// Register New User (Manual)
+// Register New User
 export const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -108,9 +92,15 @@ export const register = async (req, res) => {
       password,
       role: "Customer",
     });
+
     await user.save();
 
-    await createCustomerProfile(user);
+    try {
+      await createCustomerProfile(user);
+    } catch (err) {
+      await User.findByIdAndDelete(user._id);
+      throw err;
+    }
 
     const token = generateToken(user);
 
@@ -125,12 +115,11 @@ export const register = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Register error:", error);
     res.status(500).json({ message: "Server error. Please try again later." });
   }
 };
 
-// Manual login
+// Manual Login
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -155,7 +144,6 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Login error:", error);
     res.status(500).json({ message: "Server error. Please try again later." });
   }
 };
@@ -173,6 +161,7 @@ export const googleRedirect = (req, res) => {
 // Google OAuth callback
 export const googleCallback = async (req, res) => {
   const { code } = req.query;
+
   try {
     const { tokens } = await client.getToken(code);
     client.setCredentials(tokens);
@@ -181,20 +170,22 @@ export const googleCallback = async (req, res) => {
       idToken: tokens.id_token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
+
     const payload = ticket.getPayload();
 
     let user = await User.findOne({ email: payload.email });
 
     if (user) {
       const token = generateToken(user);
+
       return res.redirect(
-        `${process.env.FRONTEND_URL}/google-callback?token=${token}&role=${user.role}&username=${encodeURIComponent(
-          user.username
-        )}`
+          `${process.env.FRONTEND_URL}/google-callback?token=${token}&role=${user.role}&username=${encodeURIComponent(
+              user.username
+          )}`
       );
     } else {
       return res.redirect(
-        `${process.env.FRONTEND_URL}/auth/google/success?needRole=true&email=${payload.email}&name=${payload.name}`
+          `${process.env.FRONTEND_URL}/auth/google/success?needRole=true&email=${payload.email}&name=${payload.name}`
       );
     }
   } catch (error) {
@@ -203,16 +194,18 @@ export const googleCallback = async (req, res) => {
   }
 };
 
-// Complete Google signup
+// Complete Google Signup
 export const completeGoogleSignup = async (req, res) => {
   try {
     const { email, name, role } = req.body;
 
-    if (!email || !role) {
-      return res.status(400).json({ message: "Email and role required" });
-    }
+    if (!email || !role)
+      return res
+          .status(400)
+          .json({ message: "Email and role required" });
 
     let existingUser = await User.findOne({ email });
+
     if (existingUser) {
       const token = generateToken(existingUser);
       return res.json({ token, user: existingUser });
@@ -230,7 +223,11 @@ export const completeGoogleSignup = async (req, res) => {
     await user.save();
 
     if (user.role === "Customer") {
-      await createCustomerProfile(user);
+      try {
+        await createCustomerProfile(user);
+      } catch (err) {
+        console.error("Failed to create TMF Customer profile:", err);
+      }
     }
 
     const token = generateToken(user);
@@ -251,63 +248,48 @@ export const completeGoogleSignup = async (req, res) => {
   }
 };
 
-// Send OTP using Gmail OAuth2
+// Send OTP
 export const sendOTP = async (req, res) => {
   try {
     const { email } = req.body;
+
     if (!email)
-      return res.status(400).json({ success: false, message: "Email is required" });
+      return res.status(400).json({ message: "Email is required" });
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    otpStore[email] = { otp, expiresAt: Date.now() + 60 * 1000 };
 
-    const accessToken = await oAuth2Client.getAccessToken();
+    await sendEmail(
+        email,
+        "Your OTP Code",
+        `<p>Your OTP is: <b>${otp}</b></p>`
+    );
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: process.env.EMAIL_USER,
-        clientId: process.env.GMAIL_CLIENT_ID,
-        clientSecret: process.env.GMAIL_CLIENT_SECRET,
-        refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-        accessToken: accessToken.token,
-      },
-    });
-
-    const mailOptions = {
-      from: `"MarketHub" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "Your MarketHub OTP",
-      html: `<p>Your OTP is: <strong>${otp}</strong></p>`,
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log(`✅ OTP ${otp} sent to ${email}`);
-
-    otpStore[email] = { otp, expiresAt: Date.now() + 5 * 60 * 1000 };
-
-    res.status(200).json({ success: true, message: "OTP sent successfully" });
+    res.json({ message: "OTP sent successfully" });
   } catch (error) {
-    console.error("❌ Error in sendOtp:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to send OTP",
-      error: error.message,
-    });
+    console.error(error);
+    res
+        .status(500)
+        .json({ message: "Failed to send OTP", error: error.message });
   }
 };
 
-// Complete signup (manual or OTP-based)
+// Complete Signup (manual or OTP flow)
 export const completeSignup = async (req, res) => {
   try {
     const { username, email, password, role, otp } = req.body;
 
     if (!username || !email || !role)
-      return res.status(400).json({ error: "Missing required fields" });
+      return res
+          .status(400)
+          .json({ error: "Missing required fields" });
 
     const otpData = otpStore[email];
+
     if (!otpData && !req.body.google)
-      return res.status(400).json({ error: "OTP not found or expired" });
+      return res
+          .status(400)
+          .json({ error: "OTP not found or expired" });
 
     if (otpData && Date.now() > otpData.expiresAt) {
       delete otpStore[email];
@@ -331,8 +313,12 @@ export const completeSignup = async (req, res) => {
 
     delete otpStore[email];
 
-    if (user.role && user.role.toLowerCase() === "customer") {
-      await createCustomerProfile(user);
+    if (user.role?.toLowerCase() === "customer") {
+      try {
+        await createCustomerProfile(user);
+      } catch (err) {
+        console.error("⚠️ Failed to Create customer record:", err);
+      }
     }
 
     const token = generateToken(user);
