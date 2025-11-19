@@ -251,9 +251,7 @@ export const completeGoogleSignup = async (req, res) => {
 // Send OTP
 export const sendOTP = async (req, res) => {
   try {
-    console.log("EMAIL_USER:", process.env.EMAIL_USER);
-    console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "Loaded" : "Missing");
-    const { email } = req.body;
+     const { email } = req.body;
 
     if (!email)
       return res.status(400).json({ message: "Email is required" });
