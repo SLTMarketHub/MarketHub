@@ -113,13 +113,12 @@ export const register = async (req, res) => {
     });
 
     await user.save();
-    const customerCreated = await createCustomerProfile(user);
 
-    if (!customerCreated) {
+    try {
+      await createCustomerProfile(user);
+    } catch (err) {
       await User.findByIdAndDelete(user._id);
-      return res.status(500).json({
-        message: "Failed to create customer record. Please try again."
-      });
+      throw err;
     }
 
     const token = generateToken(user);
@@ -243,13 +242,10 @@ export const completeGoogleSignup = async (req, res) => {
     await user.save();
 
     if (user.role === "Customer") {
-      const customerCreated = await createCustomerProfile(user);
-
-      if (!customerCreated) {
-        await User.findByIdAndDelete(user._id);
-        return res.status(500).json({
-          message: "Failed to create customer record. Try again."
-        });
+      try {
+        await createCustomerProfile(user);
+      } catch (err) {
+        console.error("Failed to create TMF Customer profile:", err);
       }
     }
 
@@ -336,14 +332,11 @@ export const completeSignup = async (req, res) => {
 
     delete otpStore[email];
 
-    if (user.role.toLowerCase() === "customer") {
-      const created = await createCustomerProfile(user);
-
-      if (!created) {
-        await User.findByIdAndDelete(user._id);
-        return res.status(500).json({
-          error: "Failed to create customer profile"
-        });
+    if (user.role?.toLowerCase() === "customer") {
+      try {
+        await createCustomerProfile(user);
+      } catch (err) {
+        console.error("⚠️ Failed to Create customer record:", err);
       }
     }
 
