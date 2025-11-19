@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import User from "../Model/userModel.js";
 import { sendEmail } from "../utils/emailService.js";
+import { sendEmailSendgrid } from "../utils/emailServiceSendgrid.js";
 import crypto from "crypto";
 import axios from "axios";
 
@@ -251,7 +252,7 @@ export const completeGoogleSignup = async (req, res) => {
 // Send OTP
 export const sendOTP = async (req, res) => {
   try {
-     const { email } = req.body;
+    const { email } = req.body;
 
     if (!email)
       return res.status(400).json({ message: "Email is required" });
@@ -259,7 +260,7 @@ export const sendOTP = async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000);
     otpStore[email] = { otp, expiresAt: Date.now() + 60 * 1000 };
 
-    await sendEmail(
+    await sendEmailSendgrid(
         email,
         "Your OTP Code",
         `<p>Your OTP is: <b>${otp}</b></p>`
