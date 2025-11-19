@@ -6,6 +6,10 @@ import { sendEmail } from "../utils/emailService.js";
 import { sendEmailSendgrid } from "../utils/emailServiceSendgrid.js";
 import crypto from "crypto";
 import axios from "axios";
+// authController.js
+import * as customerService from "../../TMF629_Customer_API/Services/CustomerService.js";
+import eventPublisher from "../../TMF629_Customer_API/Services/EventPublisher.js";
+
 
 // ================== CONFIG ==================
 const CUSTOMER_API_URL =
@@ -39,57 +43,52 @@ export async function createCustomerProfile(user) {
   if (!user || !user.role) return;
   if (user.role.toLowerCase() !== "customer") return;
 
-  const customerPayload = {
-    "@type": "Customer",
-    userId: user._id,
-    name: user.username || user.email.split("@")[0],
-    status: "Active",
-
-    engagedParty: {
-      "@type": "Individual",
-      href: `https://markethub-api-gateway.onrender.com/tmf-api/authService/auth/${user._id}`,
-      id: user._id,
-      name: user.username,
-      "@referredType": "AuthUser"
-    },
-
-    contactMedium: [
-      {
-        "@type": "EmailContact",
-        contactType: "email",
-        preferred: true,
-        emailAddress: user.email
-      }
-    ],
-
-    relatedParty: [
-      {
-        "@type": "Individual",
-        role: "Customer",
-        partyOrPartyRole: {
-          "@type": "Individual",
-          id: user._id,
-          name: user.username,
-          "@referredType": "AuthUser",
-          href: `https://markethub-api-gateway.onrender.com/tmf-api/authService/auth/${user._id}`
-        }
-      }
-    ],
-  };
-
   try {
-    const res = await axios.post(CUSTOMER_API_URL, customerPayload, {
-      headers: { "Content-Type": "application/json" }
+    const customerData = {
+      userId: user._id,
+      name: user.username,
+      status: "Active",
+      engagedParty: {
+        "@type": "Individual",
+        href: `https://markethub-api-gateway.onrender.com/tmf-api/authService/auth/${user._id}`,
+        id: user._id,
+        name: user.username,
+        "@referredType": "AuthUser",
+      },
+      contactMedium: [
+        {
+          "@type": "EmailContact",
+          contactType: "email",
+          preferred: true,
+          emailAddress: user.email,
+        },
+      ],
+      relatedParty: [
+        {
+          "@type": "Individual",
+          role: "Customer",
+          partyOrPartyRole: {
+            "@type": "Individual",
+            href: `https://markethub-api-gateway.onrender.com/tmf-api/authService/auth/${user._id}`,
+            id: user._id,
+            name: user.username,
+            "@referredType": "AuthUser",
+          },
+        },
+      ],
+    };
+
+    const customer = await customerService.createCustomer(customerData);
+    await eventPublisher.publishEvent("CustomerCreateEvent", customer);
+
+  } catch (err) {
+    // Rollback user if customer creation fails
+    await User.findByIdAndDelete(user._id);
+    console.error("Failed to create Customer record, user deleted:", err);
+    return res.status(500).json({
+      message: "Google signup failed. Please try again.",
+      error: err.message,
     });
-    console.log("✅ Customer created:", res.data);
-    return true;
-  } catch (error) {
-    console.error("❌ Customer creation failed:", {
-      message: error.message,
-      status: error.response?.status,
-      data: error.response?.data
-    });
-    return false;
   }
 }
 
