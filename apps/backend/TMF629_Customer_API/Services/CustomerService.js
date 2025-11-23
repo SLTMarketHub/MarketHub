@@ -8,7 +8,6 @@ exports.createCustomer = async (data) => {
         newCustomer.href = `https://markethub-api-gateway.onrender.com/tmf-api/customer/v5/customer/${newCustomer._id}`;
         await newCustomer.save();
     }
-
     return newCustomer;
 };
 

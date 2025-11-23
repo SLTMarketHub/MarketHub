@@ -6,15 +6,15 @@ import { sendEmail } from "../utils/emailService.js";
 import { sendEmailSendgrid } from "../utils/emailServiceSendgrid.js";
 import crypto from "crypto";
 import axios from "axios";
-// authController.js
-import * as customerService from "../../TMF629_Customer_API/Services/CustomerService.js";
-import eventPublisher from "../../TMF629_Customer_API/Services/EventPublisher.js";
 
 
 // ================== CONFIG ==================
 const CUSTOMER_API_URL =
     process.env.TMF629_CUSTOMER_API_BASE ||
     "https://markethub-api-gateway.onrender.com/tmf-api/customer/v5/customer";
+const PARTNER_API_URL = process.env.TMF668_PARTNER_API_BASE || 
+    "https://markethub-api-gateway.onrender.com/tmf-api/partnershipManagement/v4/partnership";
+
 
 const client = new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
@@ -38,57 +38,103 @@ const generateToken = (user) =>
         { expiresIn: "7d" }
     );
 
-// Create TMF629 Customer Profile
-export async function createCustomerProfile(user) {
+export async function createRoleProfile(user) {
   if (!user || !user.role) return;
-  if (user.role.toLowerCase() !== "customer") return;
+
+  const role = user.role.toLowerCase().trim();
 
   try {
-    const customerData = {
-      userId: user._id,
-      name: user.username,
-      status: "Active",
-      engagedParty: {
-        "@type": "Individual",
-        href: `https://markethub-api-gateway.onrender.com/tmf-api/authService/auth/${user._id}`,
-        id: user._id,
+    if (role === "customer") {
+      const customerData = {
+        userId: user._id,
+        "@type": "Customer",
         name: user.username,
-        "@referredType": "AuthUser",
-      },
-      contactMedium: [
-        {
-          "@type": "EmailContact",
-          contactType: "email",
-          preferred: true,
-          emailAddress: user.email,
-        },
-      ],
-      relatedParty: [
-        {
+        status: "active",
+        engagedParty: {
           "@type": "Individual",
-          role: "Customer",
-          partyOrPartyRole: {
-            "@type": "Individual",
-            href: `https://markethub-api-gateway.onrender.com/tmf-api/authService/auth/${user._id}`,
+          href: `https://markethub-api-gateway.onrender.com/tmf-api/authService/auth/${user._id}`,
+          id: user._id,
+          name: user.username,
+          "@referredType": "AuthUser",
+        },
+        contactMedium: [
+          {
+            "@type": "EmailContactMedium",
+            contactType: "email",
+            preferred: true,
+            emailAddress: user.email
+          }
+        ],
+        relatedParty: [
+          {
+            "@type": "RelatedParty",
+            role: "Customer",
+            partyOrPartyRole: {
+              "@type": "Individual",
+              href: `https://markethub-api-gateway.onrender.com/tmf-api/authService/auth/${user._id}`,
+              id: user._id,
+              name: user.username,
+              "@referredType": "AuthUser"
+            }
+          }
+        ]
+      };
+
+      const customerResponse = await axios.post(
+          CUSTOMER_API_URL,
+          customerData
+      );
+
+      const customer = customerResponse.data;
+      return customer;
+    }
+
+    if (role === "partner") {
+    
+      const partnershipData = {
+        name: `${user.username} Partnership`,
+        description: `Partnership record for ${user.username}`,
+        href: `https://markethub-api-gateway.onrender.com/tmf-api/partnership/${user._id}`,
+        specification: {
+          id: `spec-${Date.now()}`,
+          name: "Default Partnership Spec",
+          href: "https://markethub-api-gateway.onrender.com/tmf-api/partnershipSpecification/default",
+          "@referredType": "PartnershipSpecification",
+        },
+        partner: [
+          {
             id: user._id,
             name: user.username,
-            "@referredType": "AuthUser",
+            status: "Pending",
+            engagedParty: {
+              id: user._id,
+              name: user.username,
+              role: "Partner",
+              href: `https://markethub-api-gateway.onrender.com/tmf-api/authService/auth/${user._id}`,
+              "@referredType": "AuthUser",
+            },
+            account: [],
+            agreement: [],
           },
-        },
-      ],
-    };
+        ],
+      };
 
-    const customer = await customerService.createCustomer(customerData);
-    await eventPublisher.publishEvent("CustomerCreateEvent", customer);
+      try {
+        const response = await axios.post(PARTNER_API_URL, partnershipData);
+        return response.data;
+      } catch (err) {
+        console.error("Failed to save partnership:", err.response?.data || err.message);
+      }
+    }
+
+    // If role is neither customer nor partner
+    return null;
 
   } catch (err) {
     // Rollback user if customer creation fails
     await User.findByIdAndDelete(user._id);
-    console.error("Failed to create Customer record, user deleted:", err);
-    return res.status(500).json({
-      message: "Google signup failed. Please try again.",
-      error: err.message,
-    });
+    console.error("Failed to create User record, user deleted:", err);
+    throw err;
   }
 }
 
@@ -108,13 +154,13 @@ export const register = async (req, res) => {
       username,
       email,
       password,
-      role: "Customer",
+      role,
     });
 
     await user.save();
 
     try {
-      await createCustomerProfile(user);
+      await createRoleProfile(user);
     } catch (err) {
       await User.findByIdAndDelete(user._id);
       throw err;
@@ -239,14 +285,12 @@ export const completeGoogleSignup = async (req, res) => {
     });
 
     await user.save();
-
-    if (user.role === "Customer") {
+    
       try {
-        await createCustomerProfile(user);
+        await createRoleProfile(user);
       } catch (err) {
-        console.error("Failed to create TMF Customer profile:", err);
+        console.error("Failed to create User profile:", err);
       }
-    }
 
     const token = generateToken(user);
 
@@ -330,14 +374,12 @@ export const completeSignup = async (req, res) => {
     }
 
     delete otpStore[email];
-
-    if (user.role?.toLowerCase() === "customer") {
+    
       try {
-        await createCustomerProfile(user);
+        await createRoleProfile(user);
       } catch (err) {
-        console.error("⚠️ Failed to Create customer record:", err);
+        console.error("⚠️ Failed to Create User record:", err);
       }
-    }
 
     const token = generateToken(user);
 

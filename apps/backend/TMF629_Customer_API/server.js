@@ -32,7 +32,8 @@ app.get("/", (_req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-const BASE = process.env.BASE_URL || "https://markethub-api-gateway.onrender.com"
+const BASE = process.env.BASE_URL || "https://markethub-api-gateway.onrender.com";
+
 app.listen(PORT, () =>{
     console.log(`🚀 Server running on port ${PORT}`)
     console.log(`BASE URL : ${BASE}`)

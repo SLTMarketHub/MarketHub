@@ -11,6 +11,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const BASE = process.env.BASE_URL || "https://markethub-api-gateway.onrender.com";
 
 // Middleware
 app.use(express.json());
