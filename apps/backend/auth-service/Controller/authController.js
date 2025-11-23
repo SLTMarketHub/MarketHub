@@ -47,8 +47,9 @@ export async function createRoleProfile(user) {
   try {
     if (role === "customer") {
       const customerData = {
+        id: `CUS-${user._id}`,
         userId: user._id,
-        "@type": "Customer",
+        "@type": "Individual",
         name: user.username,
         status: "active",
         engagedParty: {
