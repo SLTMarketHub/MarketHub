@@ -56,6 +56,13 @@ const EngagedPartySchema = {
 
 const CustomerSchema = new mongoose.Schema(
   {
+      id: {
+          type: String,
+          unique: true,
+          default: function () {
+              return `CUS-${this._id}`; // always unique
+          }
+      },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     "@type": { type: String, default: "Customer", required: true },
     name: { type: String, required: true },
