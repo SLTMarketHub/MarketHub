@@ -12,6 +12,7 @@ import axios from "axios";
 const CUSTOMER_API_URL =
     process.env.TMF629_CUSTOMER_API_BASE ||
     "https://markethub-api-gateway.onrender.com/tmf-api/customer/v5/customer";
+
 const PARTNER_API_URL = process.env.TMF668_PARTNER_API_BASE || 
     "https://markethub-api-gateway.onrender.com/tmf-api/partnershipManagement/v4/partnership";
 
@@ -81,7 +82,7 @@ export async function createRoleProfile(user) {
       };
 
       const customerResponse = await axios.post(
-          CUSTOMER_API_URL,
+          "https://markethub-api-gateway.onrender.com/tmf-api/customer/v5/customer",
           customerData
       );
 
@@ -120,7 +121,9 @@ export async function createRoleProfile(user) {
       };
 
       try {
-        const response = await axios.post(PARTNER_API_URL, partnershipData);
+        const response = await axios.post(
+            "https://markethub-api-gateway.onrender.com/tmf-api/partnershipManagement/v4/partnership", 
+            partnershipData);
         return response.data;
       } catch (err) {
         console.error("Failed to save partnership:", err.response?.data || err.message);
