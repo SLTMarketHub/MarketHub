@@ -67,10 +67,14 @@ app.use('/uploads', express.static(uploadsDir));
 // Logging middleware
 app.use(morgan('combined'));
 
-// Database connection
+// Database connection with connection pool limits to prevent memory leaks
 mongoose.connect(process.env.MONGODB_URI,{
   useNewUrlParser: true,
   useUnifiedTopology: true,
+  maxPoolSize: 10, // Maximum number of connections in the pool
+  minPoolSize: 2, // Minimum number of connections to maintain
+  serverSelectionTimeoutMS: 5000, // Timeout for server selection
+  socketTimeoutMS: 45000, // Timeout for socket operations
 })
 .then(() => console.log('MongoDB connected successfully'))
 .catch(err => console.error('MongoDB connection error:', err));
@@ -96,15 +100,67 @@ app.get('/tmf-api/productCatalog/v5/docs', (req, res) => {
   });
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    service: 'TMF620 Product Catalog API',
-    version: '5.0.0',
-    baseUrl: 'https://markethub-api-gateway.onrender.com'
-  });
+// Health check endpoint with database connectivity check
+app.get('/health', async (req, res) => {
+  try {
+    const healthStatus = {
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      service: 'TMF620 Product Catalog API',
+      version: '5.0.0',
+      baseUrl: 'https://markethub-api-gateway.onrender.com',
+      uptime: process.uptime(),
+      memory: {
+        used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB',
+        total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + ' MB',
+        rss: Math.round(process.memoryUsage().rss / 1024 / 1024) + ' MB'
+      }
+    };
+
+    // Check MongoDB connection
+    if (mongoose.connection.readyState === 1) {
+      // Connection is open
+      try {
+        // Perform a simple ping to verify database is actually reachable
+        await mongoose.connection.db.admin().ping();
+        healthStatus.database = {
+          status: 'connected',
+          readyState: mongoose.connection.readyState,
+          host: mongoose.connection.host,
+          name: mongoose.connection.name
+        };
+        res.status(200).json(healthStatus);
+      } catch (dbError) {
+        healthStatus.database = {
+          status: 'disconnected',
+          error: 'Database ping failed',
+          readyState: mongoose.connection.readyState
+        };
+        healthStatus.status = 'DEGRADED';
+        res.status(503).json(healthStatus);
+      }
+    } else {
+      // Connection is not ready
+      healthStatus.database = {
+        status: 'disconnected',
+        readyState: mongoose.connection.readyState,
+        message: 'MongoDB connection not established'
+      };
+      healthStatus.status = 'UNHEALTHY';
+      res.status(503).json(healthStatus);
+    }
+  } catch (error) {
+    res.status(503).json({
+      status: 'UNHEALTHY',
+      timestamp: new Date().toISOString(),
+      service: 'TMF620 Product Catalog API',
+      error: error.message,
+      memory: {
+        used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB',
+        total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + ' MB'
+      }
+    });
+  }
 });
 
 // Root endpoint
@@ -147,9 +203,51 @@ app.use('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`TMF620 Product Catalog API v5 server running on port ${PORT}`);
   console.log(`Base URL: https://markethub-api-gateway.onrender.com`);
   console.log(`API Path: /tmf-api/productCatalog/v5`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+
+// Graceful shutdown handlers to prevent memory leaks
+const gracefulShutdown = async (signal) => {
+  console.log(`\n${signal} received. Starting graceful shutdown...`);
+  
+  // Stop accepting new requests
+  server.close(async () => {
+    console.log('HTTP server closed.');
+    
+    // Close MongoDB connection
+    try {
+      await mongoose.connection.close();
+      console.log('MongoDB connection closed.');
+      process.exit(0);
+    } catch (err) {
+      console.error('Error during MongoDB disconnection:', err);
+      process.exit(1);
+    }
+  });
+
+  // Force shutdown after 10 seconds
+  setTimeout(() => {
+    console.error('Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+};
+
+// Handle shutdown signals
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  gracefulShutdown('uncaughtException');
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit on unhandled rejection, just log it to prevent memory leaks
 });
