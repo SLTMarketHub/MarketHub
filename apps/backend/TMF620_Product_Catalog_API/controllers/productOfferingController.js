@@ -281,7 +281,7 @@ module.exports = {
       await productOffering.save();
 
       // Verify data was saved correctly (optional - for debugging)
-      const savedOffering = await ProductOffering.findOne({ id: req.params.id });
+      const savedOffering = await ProductOffering.findOne({ id: req.params.id }).select('+attachment.data');
       const savedAttachment = savedOffering.attachment.find(a => a.id === attachment.id);
       if (savedAttachment && savedAttachment.data) {
         const dataLength = Buffer.isBuffer(savedAttachment.data) 
@@ -315,7 +315,7 @@ module.exports = {
 getProductOfferingAttachment: async (req, res) => {
   try {
     const { id, attId } = req.params;
-    const productOffering = await ProductOffering.findOne({ id });
+    const productOffering = await ProductOffering.findOne({ id }).select('+attachment.data');
     if (!productOffering) {
       return res.status(404).json({ message: "Product offering not found" });
     }

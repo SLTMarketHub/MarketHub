@@ -68,7 +68,10 @@ const ProductOfferingSchema = new mongoose.Schema({
     description: String,
     mimeType: String,
     // Binary image/file data storage (optional)
-    data: Buffer,
+    data: {
+      type: Buffer,
+      select: false // exclude heavy binary payloads unless explicitly requested
+    },
     contentType: String,
     name: String,
     url: String,
