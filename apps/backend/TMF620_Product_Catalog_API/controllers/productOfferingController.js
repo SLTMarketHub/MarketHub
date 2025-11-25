@@ -299,37 +299,55 @@ const getProductOfferingAttachment = async (req, res) => {
   }
 };
 
-// NEW: GET /tmf-api/productCatalog/v5/productOffering/all - Get ALL products (safe + performant)
+// GET /tmf-api/productCatalog/v5/productOffering/all - Get ALL products (safe + performant)
 const getAllProductOfferings = async (req, res) => {
   try {
     const { fields, limit } = req.query;
-    const MAX_LIMIT = 10000; // Safety cap
-    const safeLimit = limit ? Math.min(parseInt(limit), MAX_LIMIT) : MAX_LIMIT;
 
-    let projection = {};
+    // CRITICAL: Reduce max limit from 10,000 → 500 (prevents memory explosion + timeout)
+    const MAX_SAFE_LIMIT = 500;
+    const safeLimit = limit ? Math.min(parseInt(limit) || 500, MAX_SAFE_LIMIT) : 200;
+
+    // Always exclude heavy binary data from the start
+    let projection = { 'attachment.data': 0 }; // ← This is the real hero
     if (fields) {
-      fields.split(',').forEach(f => projection[f.trim()] = 1);
+      fields.split(',').forEach(f => {
+        const field = f.trim();
+        if (field !== 'attachment.data') {
+          projection[field] = 1;
+        }
+      });
     }
+
+    console.log(`Fetching up to ${safeLimit} product offerings (excluding attachment.data)...`);
 
     const productOfferings = await ProductOffering.find({}, projection)
       .limit(safeLimit)
       .sort({ createdAt: -1 })
-      .lean();
+      .lean({ virtuals: true });
 
+    // Sanitize attachments (removes any leftover binary + adds href)
     const sanitizedOfferings = productOfferings.map(offering => sanitizeAttachments(offering));
 
     res.json({
       data: sanitizedOfferings,
       total: sanitizedOfferings.length,
       limit: safeLimit,
+      maxAllowed: MAX_SAFE_LIMIT,
       retrievedAt: new Date().toISOString(),
-      warning: safeLimit === MAX_LIMIT
-        ? `Response limited to ${MAX_LIMIT} items for performance. Use pagination for larger datasets.`
-        : undefined
+      tip: sanitizedOfferings.length >= MAX_SAFE_LIMIT
+        ? "You're hitting the safety limit. Use ?limit=100 or paginated endpoints for full data."
+        : "Use /productOffering?offset=&limit= for full pagination"
     });
+
   } catch (error) {
-    console.error('Error in getAllProductOfferings:', error);
-    res.status(500).json({ error: 'Failed to retrieve all product offerings', message: error.message });
+    console.error('Error in getAllProductOfferings:', error.message);
+    res.status(500).json({
+      error: 'Failed to retrieve product offerings',
+      message: error.message.includes('timed out') 
+        ? 'Request took too long — dataset too large. Use pagination or lower limit.'
+        : error.message
+    });
   }
 };
 
@@ -343,5 +361,5 @@ module.exports = {
   deleteProductOffering,
   uploadProductOfferingImage,
   getProductOfferingAttachment,
-  getAllProductOfferings  // ← Your new method
+  getAllProductOfferings
 };
