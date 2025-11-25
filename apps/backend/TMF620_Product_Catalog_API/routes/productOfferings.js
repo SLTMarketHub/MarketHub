@@ -46,14 +46,12 @@ const handleValidationErrors = (req, res, next) => {
 
 // Routes
 router.get('/', validateQueryParams, handleValidationErrors, productOfferingController.listProductOfferings);
-router.get('/:id', productOfferingController.getProductOffering);
+router.get('/all', productOfferingController.getAllProductOfferings);                    // ← First
 router.get('/byCategory/:id', productOfferingController.getProductOfferingByCategory);
+router.get('/:id', productOfferingController.getProductOffering);                        // ← Last among GETs with param
 router.post('/', validateProductOffering, handleValidationErrors, productOfferingController.createProductOffering);
 router.patch('/:id', productOfferingController.updateProductOffering);
 router.delete('/:id', productOfferingController.deleteProductOffering);
-router.get('/all', productOfferingController.getAllProductOfferings);
-
-// Image upload for a product offering
 router.post('/:id/attachments', upload.single('image'), productOfferingController.uploadProductOfferingImage);
 router.get('/:id/attachments/:attId', productOfferingController.getProductOfferingAttachment);
 
