@@ -6,17 +6,17 @@ const path = require('path');
 const sanitizeAttachments = (offeringObj) => {
   if (offeringObj.attachment && Array.isArray(offeringObj.attachment)) {
     offeringObj.attachment = offeringObj.attachment.map(att => {
-      const { data, ...attachmentMetadata } = att;
+      const { data, ...attachmentMetadata } = att.toObject ? att.toObject() : att;
       return {
         ...attachmentMetadata,
-        href: `/tmf-api/productCatalog/v5/productOffering/${offeringObj.id}/attachments/${att.id}`
+        href: `/tmf-api/productCatalog/v5/productOffering/${offeringObj.id}/attachments/${att.id || attachmentMetadata.id}`
       };
     });
   }
   return offeringObj;
 };
 
-// GET /tmf-api/productCatalog/v5/productOffering - List product offerings with filtering and pagination
+// GET /tmf-api/productCatalog/v5/productOffering - List with filtering & pagination
 const listProductOfferings = async (req, res) => {
   try {
     const {
@@ -31,7 +31,6 @@ const listProductOfferings = async (req, res) => {
       'validFor.startDateTime.lte': startDateLte
     } = req.query;
 
-    // Build filter object
     const filter = {};
     if (name) filter.name = new RegExp(name, 'i');
     if (lifecycleStatus) filter.lifecycleStatus = lifecycleStatus;
@@ -43,11 +42,9 @@ const listProductOfferings = async (req, res) => {
       if (startDateLte) filter['validFor.startDateTime'].$lte = new Date(startDateLte);
     }
 
-    // Build projection object
     let projection = {};
     if (fields) {
-      const fieldList = fields.split(',');
-      fieldList.forEach(field => {
+      fields.split(',').forEach(field => {
         projection[field.trim()] = 1;
       });
     }
@@ -55,15 +52,12 @@ const listProductOfferings = async (req, res) => {
     const productOfferings = await ProductOffering.find(filter, projection)
       .skip(parseInt(offset))
       .limit(parseInt(limit))
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     const total = await ProductOffering.countDocuments(filter);
 
-    // Remove binary data from attachments in response (keep only metadata)
-    const sanitizedOfferings = productOfferings.map(offering => {
-      const offeringObj = offering.toObject();
-      return sanitizeAttachments(offeringObj);
-    });
+    const sanitizedOfferings = productOfferings.map(offering => sanitizeAttachments(offering));
 
     res.json({
       data: sanitizedOfferings,
@@ -75,44 +69,42 @@ const listProductOfferings = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Error in listProductOfferings:', error);
     res.status(500).json({ error: 'Internal server error', message: error.message });
   }
 };
 
-// GET /tmf-api/productCatalog/v5/productOffering/:id - Get product offering by ID
+// GET /tmf-api/productCatalog/v5/productOffering/:id
 const getProductOffering = async (req, res) => {
   try {
     const { fields } = req.query;
-    
     let projection = {};
     if (fields) {
-      const fieldList = fields.split(',');
-      fieldList.forEach(field => {
+      fields.split(',').forEach(field => {
         projection[field.trim()] = 1;
       });
     }
 
-    const productOffering = await ProductOffering.findOne({ id: req.params.id }, projection);
-    
+    const productOffering = await ProductOffering.findOne({ id: req.params.id }, projection).lean();
     if (!productOffering) {
       return res.status(404).json({ error: 'Product Offering not found' });
     }
 
-    // Remove binary data from attachments in response (keep only metadata)
-    const offeringObj = sanitizeAttachments(productOffering.toObject());
+    const offeringObj = sanitizeAttachments(productOffering);
     res.json(offeringObj);
   } catch (error) {
+    console.error('Error in getProductOffering:', error);
     res.status(500).json({ error: 'Internal server error', message: error.message });
   }
 };
 
-// GET /tmf-api/productCatalog/v5/productOffering/byCategory/:id - Get product offerings by Category
+// GET /tmf-api/productCatalog/v5/productOffering/byCategory/:id
 const getProductOfferingByCategory = async (req, res) => {
   try {
     const categoryId = req.params.id;
     const {
       offset = 0,
-      limit = 0,
+      limit = 20,
       fields,
       lifecycleStatus,
       isSellable,
@@ -120,10 +112,7 @@ const getProductOfferingByCategory = async (req, res) => {
       'validFor.startDateTime.lte': startDateLte
     } = req.query;
 
-    // Build filter object
-    const filter = {
-      'category.id': categoryId
-    };
+    const filter = { 'category.id': categoryId };
     if (lifecycleStatus) filter.lifecycleStatus = lifecycleStatus;
     if (isSellable !== undefined) filter.isSellable = isSellable === 'true';
     if (startDateGte || startDateLte) {
@@ -132,11 +121,9 @@ const getProductOfferingByCategory = async (req, res) => {
       if (startDateLte) filter['validFor.startDateTime'].$lte = new Date(startDateLte);
     }
 
-    // Build projection object
     let projection = {};
     if (fields) {
-      const fieldList = fields.split(',');
-      fieldList.forEach(field => {
+      fields.split(',').forEach(field => {
         projection[field.trim()] = 1;
       });
     }
@@ -144,15 +131,11 @@ const getProductOfferingByCategory = async (req, res) => {
     const productOfferings = await ProductOffering.find(filter, projection)
       .skip(parseInt(offset))
       .limit(parseInt(limit))
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     const total = await ProductOffering.countDocuments(filter);
-
-    // Remove binary data from attachments
-    const sanitizedOfferings = productOfferings.map(offering => {
-      const offeringObj = offering.toObject();
-      return sanitizeAttachments(offeringObj);
-    });
+    const sanitizedOfferings = productOfferings.map(offering => sanitizeAttachments(offering));
 
     res.json({
       data: sanitizedOfferings,
@@ -164,14 +147,14 @@ const getProductOfferingByCategory = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Error in getProductOfferingByCategory:', error);
     res.status(500).json({ error: 'Internal server error', message: error.message });
   }
 };
 
-// POST /tmf-api/productCatalog/v5/productOffering - Create new product offering
+// POST /tmf-api/productCatalog/v5/productOffering
 const createProductOffering = async (req, res) => {
   try {
-    // Set href if not provided
     if (!req.body.href) {
       req.body.href = `/tmf-api/productCatalog/v5/productOffering/${req.body.id}`;
     }
@@ -179,140 +162,112 @@ const createProductOffering = async (req, res) => {
     const productOffering = new ProductOffering(req.body);
     await productOffering.save();
 
-    // Remove binary data from attachments in response (keep only metadata)
     const offeringObj = sanitizeAttachments(productOffering.toObject());
     res.status(201).json(offeringObj);
+
     publishEvent('ProductOfferingCreateEvent', 'ProductOffering', productOffering.toObject());
   } catch (error) {
     if (error.code === 11000) {
       return res.status(409).json({ error: 'Product Offering with this ID already exists' });
     }
+    console.error('Error in createProductOffering:', error);
     res.status(500).json({ error: 'Internal server error', message: error.message });
   }
 };
 
-// PATCH /tmf-api/productCatalog/v5/productOffering/:id - Update product offering
+// PATCH /tmf-api/productCatalog/v5/productOffering/:id
 const updateProductOffering = async (req, res) => {
   try {
     const productOffering = await ProductOffering.findOneAndUpdate(
       { id: req.params.id },
       { $set: req.body },
       { new: true, runValidators: true }
-    );
+    ).lean();
 
     if (!productOffering) {
       return res.status(404).json({ error: 'Product Offering not found' });
     }
 
-    // Remove binary data from attachments in response (keep only metadata)
-    const offeringObj = sanitizeAttachments(productOffering.toObject());
+    const offeringObj = sanitizeAttachments(productOffering);
     res.json(offeringObj);
-    if (productOffering) publishEvent('ProductOfferingAttributeValueChangeEvent', 'ProductOffering', productOffering.toObject());
+
+    publishEvent('ProductOfferingAttributeValueChangeEvent', 'ProductOffering', productOffering);
   } catch (error) {
+    console.error('Error in updateProductOffering:', error);
     res.status(500).json({ error: 'Internal server error', message: error.message });
   }
 };
 
-// DELETE /tmf-api/productCatalog/v5/productOffering/:id - Delete product offering
+// DELETE /tmf-api/productCatalog/v5/productOffering/:id
 const deleteProductOffering = async (req, res) => {
   try {
-    const productOffering = await ProductOffering.findOneAndDelete({ id: req.params.id });
-
+    const productOffering = await ProductOffering.findOneAndDelete({ id: req.params.id }).lean();
     if (!productOffering) {
       return res.status(404).json({ error: 'Product Offering not found' });
     }
 
     res.status(204).send();
-    if (productOffering) publishEvent('ProductOfferingDeleteEvent', 'ProductOffering', productOffering.toObject());
+    publishEvent('ProductOfferingDeleteEvent', 'ProductOffering', productOffering);
   } catch (error) {
+    console.error('Error in deleteProductOffering:', error);
     res.status(500).json({ error: 'Internal server error', message: error.message });
   }
 };
 
-module.exports = {
-  listProductOfferings,
-  getProductOffering,
-  getProductOfferingByCategory,
-  createProductOffering,
-  updateProductOffering,
-  deleteProductOffering,
-  // POST /tmf-api/productCatalog/v5/productOffering/:id/attachments
-  uploadProductOfferingImage: async (req, res) => {
-    try {
-      const productOffering = await ProductOffering.findOne({ id: req.params.id });
-      if (!productOffering) {
-        return res.status(404).json({ error: 'Product Offering not found' });
-      }
-
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-      }
-
-      const file = req.file;
-      
-      // Validate file buffer exists and has data
-      if (!file.buffer || !Buffer.isBuffer(file.buffer)) {
-        return res.status(400).json({ error: 'Invalid file data' });
-      }
-
-      if (file.buffer.length === 0) {
-        return res.status(400).json({ error: 'File is empty' });
-      }
-
-      // Ensure buffer is properly formatted
-      const imageBuffer = Buffer.isBuffer(file.buffer) ? file.buffer : Buffer.from(file.buffer);
-
-      const attachment = {
-        id: `${productOffering.id}-att-${Date.now()}`,
-        attachmentType: 'image',
-        description: file.originalname,
-        mimeType: file.mimetype,
-        name: file.originalname,
-        data: imageBuffer, // Store binary data directly in MongoDB as Buffer
-        size: {
-          amount: imageBuffer.length, // Use actual buffer length
-          units: 'bytes'
-        },
-        '@type': 'Attachment'
-      };
-
-      productOffering.attachment = productOffering.attachment || [];
-      productOffering.attachment.push(attachment);
-      await productOffering.save();
-
-      // Verify data was saved correctly (optional - for debugging)
-      const savedOffering = await ProductOffering.findOne({ id: req.params.id }).select('+attachment.data');
-      const savedAttachment = savedOffering.attachment.find(a => a.id === attachment.id);
-      if (savedAttachment && savedAttachment.data) {
-        const dataLength = Buffer.isBuffer(savedAttachment.data) 
-          ? savedAttachment.data.length 
-          : (savedAttachment.data.buffer ? savedAttachment.data.buffer.length : 0);
-        if (dataLength === 0) {
-          console.warn('Warning: Image data may not have been saved correctly to database');
-        }
-      }
-
-      // Return attachment metadata only (exclude binary data)
-      const attachmentMetadata = {
-        id: attachment.id,
-        attachmentType: attachment.attachmentType,
-        description: attachment.description,
-        mimeType: attachment.mimeType,
-        name: attachment.name,
-        size: attachment.size,
-        '@type': attachment['@type'],
-        href: `/tmf-api/productCatalog/v5/productOffering/${productOffering.id}/attachments/${attachment.id}`
-      };
-
-      publishEvent('ProductOfferingAttributeValueChangeEvent', 'ProductOffering', productOffering.toObject());
-      res.status(201).json({ message: 'Image uploaded', attachment: attachmentMetadata });
-    } catch (error) {
-      res.status(500).json({ error: 'Internal server error', message: error.message });
+// POST /tmf-api/productCatalog/v5/productOffering/:id/attachments - Upload image
+const uploadProductOfferingImage = async (req, res) => {
+  try {
+    const productOffering = await ProductOffering.findOne({ id: req.params.id });
+    if (!productOffering) {
+      return res.status(404).json({ error: 'Product Offering not found' });
     }
-  },
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
 
-// GET /tmf-api/productCatalog/v5/productOffering/:id/attachments/:attId
-getProductOfferingAttachment: async (req, res) => {
+    const file = req.file;
+    if (!file.buffer || file.buffer.length === 0) {
+      return res.status(400).json({ error: 'Invalid or empty file' });
+    }
+
+    const imageBuffer = Buffer.from(file.buffer);
+
+    const attachment = {
+      id: `${productOffering.id}-att-${Date.now()}`,
+      attachmentType: 'image',
+      description: file.originalname,
+      mimeType: file.mimetype,
+      name: file.originalname,
+      data: imageBuffer,
+      size: { amount: imageBuffer.length, units: 'bytes' },
+      '@type': 'Attachment'
+    };
+
+    productOffering.attachment = productOffering.attachment || [];
+    productOffering.attachment.push(attachment);
+    await productOffering.save();
+
+    const attachmentMetadata = {
+      id: attachment.id,
+      attachmentType: attachment.attachmentType,
+      description: attachment.description,
+      mimeType: attachment.mimeType,
+      name: attachment.name,
+      size: attachment.size,
+      '@type': attachment['@type'],
+      href: `/tmf-api/productCatalog/v5/productOffering/${productOffering.id}/attachments/${attachment.id}`
+    };
+
+    publishEvent('ProductOfferingAttributeValueChangeEvent', 'ProductOffering', productOffering.toObject());
+    res.status(201).json({ message: 'Image uploaded successfully', attachment: attachmentMetadata });
+  } catch (error) {
+    console.error('Error in uploadProductOfferingImage:', error);
+    res.status(500).json({ error: 'Internal server error', message: error.message });
+  }
+};
+
+// GET /tmf-api/productCatalog/v5/productOffering/:id/attachments/:attId - Serve image
+const getProductOfferingAttachment = async (req, res) => {
   try {
     const { id, attId } = req.params;
     const productOffering = await ProductOffering.findOne({ id }).select('+attachment.data');
@@ -325,35 +280,68 @@ getProductOfferingAttachment: async (req, res) => {
       return res.status(404).json({ message: "Attachment not found" });
     }
 
-    // ✅ Ensure data is in Buffer format
-    let imageBuffer;
-    if (Buffer.isBuffer(attachment.data)) {
-      imageBuffer = attachment.data;
-    } else if (attachment.data && attachment.data.buffer) {
-      imageBuffer = Buffer.from(attachment.data.buffer);
-    } else if (typeof attachment.data === "string") {
-      imageBuffer = Buffer.from(attachment.data, "base64");
-    } else {
-      imageBuffer = Buffer.from(attachment.data);
-    }
+    let imageBuffer = Buffer.isBuffer(attachment.data)
+      ? attachment.data
+      : Buffer.from(attachment.data.buffer || attachment.data);
 
-    // Set CORS headers to allow image retrieval from any origin
-    res.set("Access-Control-Allow-Origin", "*"); // Allow all origins for images
-    res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
-    res.set("Access-Control-Allow-Headers", "Content-Type");
-    
-    // Set image-specific headers
-    res.set("Content-Type", attachment.mimeType || "image/png");
-    res.set("Content-Disposition", `inline; filename="${attachment.name || "image"}"`);
-    res.set("Content-Length", imageBuffer.length);
-    res.set("Cache-Control", "public, max-age=31536000"); // Cache for 1 year
-    
+    res.set({
+      "Content-Type": attachment.mimeType || "image/png",
+      "Content-Disposition": `inline; filename="${attachment.name || "image"}"`,
+      "Content-Length": imageBuffer.length,
+      "Cache-Control": "public, max-age=31536000",
+      "Access-Control-Allow-Origin": "*"
+    });
+
     res.send(imageBuffer);
   } catch (error) {
     console.error("Error retrieving attachment:", error);
     res.status(500).json({ message: "Error retrieving attachment", error: error.message });
   }
-},
-
 };
 
+// NEW: GET /tmf-api/productCatalog/v5/productOffering/all - Get ALL products (safe + performant)
+const getAllProductOfferings = async (req, res) => {
+  try {
+    const { fields, limit } = req.query;
+    const MAX_LIMIT = 10000; // Safety cap
+    const safeLimit = limit ? Math.min(parseInt(limit), MAX_LIMIT) : MAX_LIMIT;
+
+    let projection = {};
+    if (fields) {
+      fields.split(',').forEach(f => projection[f.trim()] = 1);
+    }
+
+    const productOfferings = await ProductOffering.find({}, projection)
+      .limit(safeLimit)
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const sanitizedOfferings = productOfferings.map(offering => sanitizeAttachments(offering));
+
+    res.json({
+      data: sanitizedOfferings,
+      total: sanitizedOfferings.length,
+      limit: safeLimit,
+      retrievedAt: new Date().toISOString(),
+      warning: safeLimit === MAX_LIMIT
+        ? `Response limited to ${MAX_LIMIT} items for performance. Use pagination for larger datasets.`
+        : undefined
+    });
+  } catch (error) {
+    console.error('Error in getAllProductOfferings:', error);
+    res.status(500).json({ error: 'Failed to retrieve all product offerings', message: error.message });
+  }
+};
+
+// Export all controllers
+module.exports = {
+  listProductOfferings,
+  getProductOffering,
+  getProductOfferingByCategory,
+  createProductOffering,
+  updateProductOffering,
+  deleteProductOffering,
+  uploadProductOfferingImage,
+  getProductOfferingAttachment,
+  getAllProductOfferings  // ← Your new method
+};
