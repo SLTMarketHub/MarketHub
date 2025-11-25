@@ -304,27 +304,53 @@ const getAllProductOfferings = async (req, res) => {
   try {
     const { fields, limit } = req.query;
 
-    // CRITICAL: Reduce max limit from 10,000 → 500 (prevents memory explosion + timeout)
-    const MAX_SAFE_LIMIT = 500;
-    const safeLimit = limit ? Math.min(parseInt(limit) || 500, MAX_SAFE_LIMIT) : 200;
+    // CRITICAL: Aggressive limit to prevent timeouts
+    const MAX_SAFE_LIMIT = 100;
+    const safeLimit = limit ? Math.min(parseInt(limit) || 100, MAX_SAFE_LIMIT) : 50;
 
-    // Always exclude heavy binary data from the start
-    let projection = { 'attachment.data': 0 }; // ← This is the real hero
+    // Build minimal projection - only fetch essential fields
+    let projection = {
+      id: 1,
+      href: 1,
+      name: 1,
+      description: 1,
+      lifecycleStatus: 1,
+      isSellable: 1,
+      version: 1,
+      createdAt: 1,
+      'attachment.id': 1,
+      'attachment.href': 1,
+      'attachment.name': 1,
+      'attachment.mimeType': 1,
+      'attachment.attachmentType': 1,
+      'category.id': 1,
+      'category.name': 1
+    };
+
+    // If custom fields requested, use them but exclude heavy data
     if (fields) {
+      projection = {};
       fields.split(',').forEach(f => {
         const field = f.trim();
-        if (field !== 'attachment.data') {
+        // Always exclude binary data
+        if (!field.includes('data') && !field.includes('attachment.data')) {
           projection[field] = 1;
         }
       });
+      // Ensure critical fields are always included
+      projection.id = 1;
+      projection.name = 1;
     }
 
-    console.log(`Fetching up to ${safeLimit} product offerings (excluding attachment.data)...`);
+    console.log(`Fetching up to ${safeLimit} product offerings with minimal projection...`);
 
+    // Set query timeout to 15 seconds
     const productOfferings = await ProductOffering.find({}, projection)
       .limit(safeLimit)
       .sort({ createdAt: -1 })
-      .lean({ virtuals: true });
+      .maxTimeMS(15000) // Query timeout
+      .lean()
+      .exec();
 
     // Sanitize attachments (removes any leftover binary + adds href)
     const sanitizedOfferings = productOfferings.map(offering => sanitizeAttachments(offering));
@@ -335,18 +361,18 @@ const getAllProductOfferings = async (req, res) => {
       limit: safeLimit,
       maxAllowed: MAX_SAFE_LIMIT,
       retrievedAt: new Date().toISOString(),
-      tip: sanitizedOfferings.length >= MAX_SAFE_LIMIT
-        ? "You're hitting the safety limit. Use ?limit=100 or paginated endpoints for full data."
-        : "Use /productOffering?offset=&limit= for full pagination"
+      message: "Use paginated endpoints /productOffering?offset=0&limit=20 for better performance and full data access"
     });
 
   } catch (error) {
-    console.error('Error in getAllProductOfferings:', error.message);
-    res.status(500).json({
-      error: 'Failed to retrieve product offerings',
-      message: error.message.includes('timed out') 
-        ? 'Request took too long — dataset too large. Use pagination or lower limit.'
-        : error.message
+    console.error('Error in getAllProductOfferings:', error);
+    const timeoutError = error.message.includes('timed out') || error.message.includes('maxTimeMS');
+    res.status(timeoutError ? 504 : 500).json({
+      error: timeoutError ? 'Request timeout' : 'Failed to retrieve product offerings',
+      message: timeoutError 
+        ? 'Query exceeded 15s timeout. Try pagination with /productOffering?offset=0&limit=20'
+        : error.message,
+      suggestion: 'Use the paginated /productOffering endpoint for better performance'
     });
   }
 };

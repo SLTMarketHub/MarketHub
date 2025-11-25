@@ -253,5 +253,7 @@ ProductOfferingSchema.index({ id: 1 });
 ProductOfferingSchema.index({ name: 1 });
 ProductOfferingSchema.index({ lifecycleStatus: 1 });
 ProductOfferingSchema.index({ 'category.id': 1 });
+ProductOfferingSchema.index({ createdAt: -1 }); // For sorting in getAllProductOfferings
+ProductOfferingSchema.index({ isSellable: 1, lifecycleStatus: 1 }); // Compound index for filtering
 
 module.exports = mongoose.model('ProductOffering', ProductOfferingSchema);
