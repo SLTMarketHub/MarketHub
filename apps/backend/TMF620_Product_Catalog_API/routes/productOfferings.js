@@ -51,6 +51,7 @@ router.get('/byCategory/:id', productOfferingController.getProductOfferingByCate
 router.post('/', validateProductOffering, handleValidationErrors, productOfferingController.createProductOffering);
 router.patch('/:id', productOfferingController.updateProductOffering);
 router.delete('/:id', productOfferingController.deleteProductOffering);
+router.get('/all', productOfferingController.getAllProductOfferings);
 
 // Image upload for a product offering
 router.post('/:id/attachments', upload.single('image'), productOfferingController.uploadProductOfferingImage);
